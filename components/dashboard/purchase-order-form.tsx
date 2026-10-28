@@ -16,11 +16,12 @@ type Props = {
   items: Array<{ id: string; name: string; price: number }>;
   onSubmit: (draft: PurchaseOrderDraft) => void;
   onCancel: () => void;
+  busy?: boolean;
 };
 
 type DraftLine = { item_id: string; quantity: string; unit_price: string };
 
-export function PurchaseOrderForm({ initialReference, suppliers, items, onSubmit, onCancel }: Props) {
+export function PurchaseOrderForm({ initialReference, suppliers, items, onSubmit, onCancel, busy }: Props) {
   const [reference, setReference] = useState(initialReference);
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id || '');
   const [expectedDate, setExpectedDate] = useState('');
@@ -58,7 +59,7 @@ export function PurchaseOrderForm({ initialReference, suppliers, items, onSubmit
           <h2>Nouvelle commande</h2>
           <p>Associez chaque ligne à un article réel de l’inventaire.</p>
         </div>
-        <button type="button" className="close" onClick={onCancel}>×</button>
+        <button type="button" className="close" disabled={busy} onClick={onCancel}>×</button>
       </div>
       <div className="form-grid">
         <div className="field">
@@ -126,8 +127,8 @@ export function PurchaseOrderForm({ initialReference, suppliers, items, onSubmit
       </div>
       <div className="panel-sub">Montant total calculé : {new Intl.NumberFormat('fr-FR').format(amount)} FCFA</div>
       <div className="modal-actions">
-        <button className="btn secondary" type="button" onClick={onCancel}>Annuler</button>
-        <button className="btn" type="submit" disabled={!suppliers.length || !items.length}>Créer la commande</button>
+        <button className="btn secondary" type="button" disabled={busy} onClick={onCancel}>Annuler</button>
+        <button className="btn" type="submit" disabled={busy || !suppliers.length || !items.length}>Créer la commande</button>
       </div>
     </form>
   );

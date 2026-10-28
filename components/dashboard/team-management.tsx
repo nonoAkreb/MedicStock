@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, RefreshCw, ShieldCheck, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { formatError } from '@/lib/errors';
 
 type CenterProfile = {
   id: string;
@@ -34,7 +35,7 @@ export function TeamManagement() {
       .select('id,full_name,role,access_status')
       .order('full_name');
     if (queryError) {
-      setError(`Chargement des utilisateurs impossible : ${queryError.message}`);
+      setError(`Chargement des utilisateurs impossible : ${formatError(queryError)}`);
       setProfiles([]);
     } else {
       setProfiles(data || []);
@@ -51,18 +52,21 @@ export function TeamManagement() {
     setBusyId(profile.id);
     setError('');
     setNotice('');
-    const { error: reviewError } = await supabase.rpc('review_center_profile', {
-      p_user_id: profile.id,
-      p_access_status: accessStatus,
-      p_role: roles[profile.id] || (profile.role === 'pharmacist' ? 'pharmacist' : 'nurse'),
-    });
-    if (reviewError) {
-      setError(`Mise à jour de l’accès impossible : ${reviewError.message}`);
-    } else {
-      setNotice(accessStatus === 'approved' ? 'Accès au centre approuvé.' : 'Accès au centre suspendu.');
-      await loadProfiles();
+    try {
+      const { error: reviewError } = await supabase.rpc('review_center_profile', {
+        p_user_id: profile.id,
+        p_access_status: accessStatus,
+        p_role: roles[profile.id] || (profile.role === 'pharmacist' ? 'pharmacist' : 'nurse'),
+      });
+      if (reviewError) {
+        setError(`Mise à jour de l’accès impossible : ${formatError(reviewError)}`);
+      } else {
+        setNotice(accessStatus === 'approved' ? 'Accès au centre approuvé.' : 'Accès au centre suspendu.');
+        await loadProfiles();
+      }
+    } finally {
+      setBusyId('');
     }
-    setBusyId('');
   };
 
   return (
