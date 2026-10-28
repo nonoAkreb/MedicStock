@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const requestedNext = searchParams.get('next') ?? '/dashboard';
   // Empêche toute redirection externe injectée dans le paramètre next.
-  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard';
+  const next =
+    requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard';
   if (code) {
     const cookieStore = await cookies();
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,9 +16,13 @@ export async function GET(request: NextRequest) {
     if (supabaseUrl && supabaseKey) {
       const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
-          getAll() { return cookieStore.getAll(); },
+          getAll() {
+            return cookieStore.getAll();
+          },
           setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            );
           },
         },
       });

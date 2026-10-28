@@ -8,13 +8,13 @@ Cet audit ne constitue pas un test d’intrusion et n’a pas porté sur un proj
 
 ## Synthèse des constats
 
-| # | Priorité | Constat | Risque |
-|---|---|---|---|
-| 1 | **Élevée — remédiation locale, déploiement restant** | Sans migration appliquée, les politiques actuelles autorisent encore les comptes authentifiés à lire les données et les rôles infirmiers à enregistrer des sorties. | Un compte créé sans approbation peut consulter les données et diminuer les quantités. |
-| 2 | **Élevée — remédiation locale, déploiement restant** | Avant correction, l’interface et le script de schéma pouvaient laisser des données fictives dans un environnement connecté. | Un inventaire fictif peut être confondu avec le stock réel. |
-| 3 | **Moyenne** | La réception d’une commande ne fait que changer son statut ; elle n’ajoute rien à l’inventaire. | Les commandes « reçues » et les quantités en stock peuvent diverger. |
-| 4 | **Moyenne, conditionnelle** | Aucune séparation par clinique/organisation n’est prévue dans les tables ou les politiques RLS. | Si plusieurs cliniques partagent le même projet Supabase, elles partagent aussi leurs données. |
-| 5 | **Moyenne, à confirmer** | Le rafraîchissement de session peut tenter d’écrire des cookies depuis une page Server Component. | Une session expirée peut provoquer un échec au lieu d’être renouvelée correctement. |
+| #   | Priorité                                             | Constat                                                                                                                                                             | Risque                                                                                         |
+| --- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | **Élevée — remédiation locale, déploiement restant** | Sans migration appliquée, les politiques actuelles autorisent encore les comptes authentifiés à lire les données et les rôles infirmiers à enregistrer des sorties. | Un compte créé sans approbation peut consulter les données et diminuer les quantités.          |
+| 2   | **Élevée — remédiation locale, déploiement restant** | Avant correction, l’interface et le script de schéma pouvaient laisser des données fictives dans un environnement connecté.                                         | Un inventaire fictif peut être confondu avec le stock réel.                                    |
+| 3   | **Moyenne**                                          | La réception d’une commande ne fait que changer son statut ; elle n’ajoute rien à l’inventaire.                                                                     | Les commandes « reçues » et les quantités en stock peuvent diverger.                           |
+| 4   | **Moyenne, conditionnelle**                          | Aucune séparation par clinique/organisation n’est prévue dans les tables ou les politiques RLS.                                                                     | Si plusieurs cliniques partagent le même projet Supabase, elles partagent aussi leurs données. |
+| 5   | **Moyenne, à confirmer**                             | Le rafraîchissement de session peut tenter d’écrire des cookies depuis une page Server Component.                                                                   | Une session expirée peut provoquer un échec au lieu d’être renouvelée correctement.            |
 
 ## Détails
 
@@ -274,8 +274,8 @@ Plan proposé pour une équipe réduite (un développeur et un valideur métier)
 
 ## Jalons de livraison suggérés
 
-| Jalon | Lots | Condition de passage |
-|---|---|---|
-| Sécurisation minimale | 0, 1 et 2 | Aucun compte non approuvé ne peut accéder aux opérations ; aucune donnée fictive dans le mode connecté. |
-| Cohérence métier | 3 et 4 | Réceptions cohérentes avec le stock ; isolation mono/multi-clinique explicitement garantie. |
-| Préparation de production | 5 et 6 | Sessions validées, tests et build réussis, recette métier et retour arrière prêts. |
+| Jalon                     | Lots      | Condition de passage                                                                                    |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| Sécurisation minimale     | 0, 1 et 2 | Aucun compte non approuvé ne peut accéder aux opérations ; aucune donnée fictive dans le mode connecté. |
+| Cohérence métier          | 3 et 4    | Réceptions cohérentes avec le stock ; isolation mono/multi-clinique explicitement garantie.             |
+| Préparation de production | 5 et 6    | Sessions validées, tests et build réussis, recette métier et retour arrière prêts.                      |

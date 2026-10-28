@@ -2,14 +2,15 @@
 
 Ordre d'application obligatoire :
 
-| # | Migration | Contenu | Garde-fou |
-|---|-----------|---------|-----------|
-| 1 | `20261028120000_gate_unapproved_users` | `access_status`, rôles, `record_stock_movement` v1 | — |
-| 2 | `20261028121500_transactional_purchase_orders` | `create/receive_purchase_order` v1 | — |
-| 3 | `20261028130000_center_scoped_access` | hiérarchie santé, `center_id`, triggers, RPC v2, politiques centre | **échoue si politiques RLS inconnues** |
-| 4 | `20261028140000_health_reference_authenticated_read` | health_* lisible par `authenticated` seulement | dépend des noms de politiques de la n°3 |
-| 5 | `20261028150000_stock_integrity` | `archived_at`, `unit_price`, FK restrict, CHECK statuts | **échoue si commandes `pending`/`cancelled`** |
-| 6 | `20261028160000_isolation_fixups` | `create_purchase_order` ignore archivés, revoke delete | — |
+| #   | Migration                                            | Contenu                                                            | Garde-fou                                     |
+| --- | ---------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| 0   | `20261028110000_base_schema`                         | copie idempotente de `schema.sql` (bootstrap piles locales/CI)     | sans effet sur prod où le schéma existe déjà  |
+| 1   | `20261028120000_gate_unapproved_users`               | `access_status`, rôles, `record_stock_movement` v1                 | —                                             |
+| 2   | `20261028121500_transactional_purchase_orders`       | `create/receive_purchase_order` v1                                 | —                                             |
+| 3   | `20261028130000_center_scoped_access`                | hiérarchie santé, `center_id`, triggers, RPC v2, politiques centre | **échoue si politiques RLS inconnues**        |
+| 4   | `20261028140000_health_reference_authenticated_read` | health_* lisible par `authenticated` seulement                     | dépend des noms de politiques de la n°3       |
+| 5   | `20261028150000_stock_integrity`                     | `archived_at`, `unit_price`, FK restrict, CHECK statuts            | **échoue si commandes `pending`/`cancelled`** |
+| 6   | `20261028160000_isolation_fixups`                    | `create_purchase_order` ignore archivés, revoke delete             | —                                             |
 
 ## 1. Pré-vérifications (production, lecture seule)
 
@@ -48,12 +49,13 @@ where conrelid in ('public.stock_movements','public.purchase_orders'::regclass);
 
 ## 3. Application sur base de test
 
-- Projet Supabase de staging (ou branche) avec `schema.sql` + `seed.sql`.
-- `supabase db push` ou collage successif des 6 fichiers dans le SQL Editor,
-  dans l'ordre du tableau ci-dessus.
-- Exécuter `supabase/tests/recette-rls-multicentres.sql` et
-  `supabase/tests/recette-lot4.sql` — tous les « Attendu » doivent tenir.
-- Exécuter `supabase/tests/inventory-no-center.sql` → remplir le fichier de
+- Projet Supabase de staging, ou pile locale : `supabase start` applique les 7
+  migrations (la n°0 bootstrappe le schéma) puis `supabase test db` doit passer
+  les 33 tests pgTAP de `supabase/tests/rls-multicentres.test.sql`.
+- `supabase db push` ou collage successif des fichiers dans l'ordre du tableau.
+- Scripts manuels complémentaires dans `supabase/ops/` :
+  `recette-rls-multicentres.sql`, `recette-lot4.sql`.
+- Exécuter `supabase/ops/inventory-no-center.sql` → remplir le fichier de
   mapping `center-mapping.csv`, le faire valider par le métier.
 - Appliquer les rattachements validés via la section « UPDATE » du script
   d'inventaire (générée depuis le mapping validé, en une transaction).
@@ -67,6 +69,7 @@ where conrelid in ('public.stock_movements','public.purchase_orders'::regclass);
    section UPDATE) — avant toute reconnexion utilisateur.
 5. Fumée : connexion admin → dashboard OK ; un utilisateur par centre ne voit
    que ses données ; création + archivage d'un article ; mouvement OK.
+   Premier compte : `supabase/ops/create-first-admin.sql`.
 6. Fin de fenêtre.
 
 ## 5. Rollback

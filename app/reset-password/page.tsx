@@ -10,10 +10,9 @@ export default function ResetPasswordPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(() => !supabase);
   useEffect(() => {
     if (supabase) supabase.auth.getSession().then(({ data }) => setReady(!!data.session));
-    else setReady(true);
   }, []);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

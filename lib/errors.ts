@@ -6,7 +6,11 @@ export function formatError(error: unknown): string {
   const code = typeof anyError?.code === 'string' ? anyError.code : '';
   const message = typeof anyError?.message === 'string' ? anyError.message : '';
 
-  if (code === '42501' || code === 'PGRST301' || /row-level security|permission denied/i.test(message)) {
+  if (
+    code === '42501' ||
+    code === 'PGRST301' ||
+    /row-level security|permission denied/i.test(message)
+  ) {
     return 'Action non autorisée';
   }
   if (code === '23505') return 'Cet élément existe déjà.';

@@ -51,6 +51,7 @@ import {
   Users,
   Warehouse,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 
 type Item = {
@@ -396,11 +397,12 @@ export default function Home() {
     const load = async () => {
       try {
         if (supabase) {
-          let {
-            data: { session },
+          const {
+            data: { session: initialSession },
             error: sessionError,
           } = await supabase.auth.getSession();
           if (sessionError) throw sessionError;
+          let session = initialSession;
           if (!session) {
             const { data: refreshData, error } = await supabase.auth.refreshSession();
             if (error) throw error;
@@ -426,7 +428,7 @@ export default function Home() {
           if (!p) throw new Error('Profil utilisateur introuvable.');
           setName(p.full_name || session.user.email || 'Utilisateur');
           setRole(p.role || 'nurse');
-          let nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
+          const nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
           let nextExpenses = expenses;
           if (p.role === 'admin') {
             const firstMonth = new Date();
@@ -448,7 +450,7 @@ export default function Home() {
               throw new Error(`Chargement des profils impossible : ${profilesError.message}`);
             if (outRowsError)
               throw new Error(`Chargement des dépenses impossible : ${outRowsError.message}`);
-            profiles?.forEach((u: any) => {
+            profiles?.forEach((u: { role: string }) => {
               if (u.role in nextProfileCounts)
                 nextProfileCounts[u.role as keyof typeof nextProfileCounts]++;
             });
@@ -462,11 +464,13 @@ export default function Home() {
                 value: 0,
               };
             });
-            outRows?.forEach((r: any) => {
-              const d = new Date(r.created_at);
-              const entry = series.find((s) => s.key === `${d.getFullYear()}-${d.getMonth()}`);
-              if (entry) entry.value += Number(r.quantity) * Number(r.unit_price || 0);
-            });
+            outRows?.forEach(
+              (r: { created_at: string; quantity: number; unit_price: number | null }) => {
+                const d = new Date(r.created_at);
+                const entry = series.find((s) => s.key === `${d.getFullYear()}-${d.getMonth()}`);
+                if (entry) entry.value += Number(r.quantity) * Number(r.unit_price || 0);
+              },
+            );
             nextExpenses = series.map(({ label, value }) => ({ label, value }));
           }
           const [
@@ -502,30 +506,52 @@ export default function Home() {
           if (!active) return;
           setProfileCounts(nextProfileCounts);
           setExpenses(nextExpenses);
-          setItems((it || []).map((x: any) => ({ ...x, supplier_name: x.suppliers?.name })));
-          setSuppliers(sp || []);
-          setMovements(
-            (mv || []).map((x: any) => ({
+          setItems(
+            (it || []).map((x: Item & { suppliers?: { name: string | null } | null }) => ({
               ...x,
-              item_name: x.inventory_items?.name,
-              user_name: x.profiles?.full_name,
+              supplier_name: x.suppliers?.name ?? undefined,
             })),
           );
+          setSuppliers(sp || []);
+          setMovements(
+            (mv || []).map(
+              (
+                x: Movement & {
+                  inventory_items?: { name: string } | null;
+                  profiles?: { full_name: string } | null;
+                },
+              ) => ({
+                ...x,
+                item_name: x.inventory_items?.name,
+                user_name: x.profiles?.full_name,
+              }),
+            ),
+          );
           setOrders(
-            (od || []).map((x: any) => ({
-              id: x.id,
-              reference: x.reference,
-              supplier: x.suppliers?.name || 'Fournisseur',
-              items: x.purchase_order_items?.[0]?.count || 0,
-              amount: Number(x.total_amount),
-              status:
-                x.status === 'in_transit'
-                  ? 'En transit'
-                  : x.status === 'received'
-                    ? 'Reçue'
-                    : x.status,
-              date: x.created_at.slice(0, 10),
-            })),
+            (od || []).map(
+              (x: {
+                id: string;
+                reference: string;
+                suppliers?: { name: string } | null;
+                purchase_order_items?: { count: number }[];
+                total_amount: number;
+                status: string;
+                created_at: string;
+              }) => ({
+                id: x.id,
+                reference: x.reference,
+                supplier: x.suppliers?.name || 'Fournisseur',
+                items: x.purchase_order_items?.[0]?.count || 0,
+                amount: Number(x.total_amount),
+                status:
+                  x.status === 'in_transit'
+                    ? 'En transit'
+                    : x.status === 'received'
+                      ? 'Reçue'
+                      : x.status,
+                date: x.created_at.slice(0, 10),
+              }),
+            ),
           );
         } else {
           const raw = localStorage.getItem('medistock-demo');
@@ -576,7 +602,9 @@ export default function Home() {
         JSON.stringify({ items, suppliers, movements, orders }),
       );
     } catch (error) {
-      setDataError('Enregistrement de la démo impossible : ' + formatError(error));
+      queueMicrotask(() =>
+        setDataError('Enregistrement de la démo impossible : ' + formatError(error)),
+      );
     }
   }, [items, suppliers, movements, orders, booting, dataError]);
   useEffect(() => {
@@ -623,12 +651,13 @@ export default function Home() {
   }, [toast]);
   const notify = (s: string) => setToast(s);
   const lowItems = items.filter((i) => i.quantity <= i.min_threshold);
+  const [today] = useState(() => new Date(new Date().toDateString()));
   const expiring = items
     .filter(
       (i) =>
         i.expiration_date &&
-        new Date(i.expiration_date + 'T12:00:00') >= new Date(new Date().toDateString()) &&
-        (new Date(i.expiration_date + 'T12:00:00').getTime() - Date.now()) / 86400000 <= 90,
+        new Date(i.expiration_date + 'T12:00:00') >= today &&
+        (new Date(i.expiration_date + 'T12:00:00').getTime() - today.getTime()) / 86400000 <= 90,
     )
     .sort((a, b) => String(a.expiration_date).localeCompare(String(b.expiration_date)));
   const totalValue = items.reduce((a, i) => a + i.quantity * i.price, 0);
@@ -641,7 +670,7 @@ export default function Home() {
       ),
     [items, query, filter],
   );
-  const nav =
+  const nav: { title: string; links: [string, string, LucideIcon][] }[] =
     role === 'nurse'
       ? [
           {
@@ -1377,7 +1406,7 @@ export default function Home() {
         {nav.map((group) => (
           <div key={group.title}>
             <div className="nav-label">{group.title}</div>
-            {group.links.map(([id, label, Icon]: any) => (
+            {group.links.map(([id, label, Icon]) => (
               <button
                 key={id}
                 className={'nav-item ' + (page === id ? 'active' : '')}

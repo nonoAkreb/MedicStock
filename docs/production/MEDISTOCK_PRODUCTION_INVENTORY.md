@@ -11,17 +11,17 @@
 
 ### Stack technique (versions installées vérifiées dans `package-lock.json`)
 
-| Composant | Version déclarée (`package.json`) | Version installée (lock) |
-|---|---|---|
-| Next.js | `^15.1.6` | **16.4.3** ⚠️ |
-| React | `^19.0.0` | **19.3.1** |
-| react-dom | `^19.0.0` | **19.3.1** |
-| @supabase/ssr | `^0.6.1` | **0.6.1** |
-| @supabase/supabase-js | `^2.49.1` | **2.118.0** ⚠️ |
-| lucide-react | `^0.468.0` | **0.468.0** |
-| TypeScript | `^5.7.3` | **5.9.3** |
-| Node.js (hôte local) | — | **22.13.1** |
-| npm (hôte local) | — | **11.2.0** |
+| Composant             | Version déclarée (`package.json`) | Version installée (lock) |
+| --------------------- | --------------------------------- | ------------------------ |
+| Next.js               | `^15.1.6`                         | **16.4.3** ⚠️            |
+| React                 | `^19.0.0`                         | **19.3.1**               |
+| react-dom             | `^19.0.0`                         | **19.3.1**               |
+| @supabase/ssr         | `^0.6.1`                          | **0.6.1**                |
+| @supabase/supabase-js | `^2.49.1`                         | **2.118.0** ⚠️           |
+| lucide-react          | `^0.468.0`                        | **0.468.0**              |
+| TypeScript            | `^5.7.3`                          | **5.9.3**                |
+| Node.js (hôte local)  | —                                 | **22.13.1**              |
+| npm (hôte local)      | —                                 | **11.2.0**               |
 
 > ⚠️ **Écart de version majeur :** `package.json` déclare `next ^15.1.6` mais la version installée est **16.4.3**. Idem pour `@supabase/supabase-js` : déclaré `^2.49.1`, installé `2.118.0`. Les ranges `^` ont permis des montées de version non maîtrisées. À confirmer avec une vérification de compatibilité.
 
@@ -94,16 +94,16 @@ const nextConfig: NextConfig = { allowedDevOrigins: ['*.e2b.app'] };
 
 ### Clés présentes dans `.env` (valeurs non affichées)
 
-| Clé `.env` | Utilisée dans le code | Rôle attendu |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ `lib/supabase/client.ts`, `dashboard/page.tsx`, `auth/callback/route.ts` | URL du projet Supabase |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ❌ **jamais lue dans le code** | Clé publique anon (mauvais nom) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ **lue dans le code** | Clé anon — **ABSENTE du `.env`** |
-| `SUPABASE_URL` | ❌ non lue dans le code applicatif | Doublon serveur ? |
-| `SUPABASE_PUBLISHABLE_KEY` | ❌ non lue | Doublon clé publique ? |
-| `SUPABASE_SECRET_KEY` | ❌ non lue dans le code applicatif | Clé service_role (sensible) |
-| `SUPABASE_JWKS_URL` | ❌ non lue | JWKS Supabase Auth |
-| `SUPABASE_ANON_KEY` | ❌ non lue dans le code applicatif | Doublon clé anon |
+| Clé `.env`                             | Utilisée dans le code                                                       | Rôle attendu                     |
+| -------------------------------------- | --------------------------------------------------------------------------- | -------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | ✅ `lib/supabase/client.ts`, `dashboard/page.tsx`, `auth/callback/route.ts` | URL du projet Supabase           |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ❌ **jamais lue dans le code**                                              | Clé publique anon (mauvais nom)  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`        | ✅ **lue dans le code**                                                     | Clé anon — **ABSENTE du `.env`** |
+| `SUPABASE_URL`                         | ❌ non lue dans le code applicatif                                          | Doublon serveur ?                |
+| `SUPABASE_PUBLISHABLE_KEY`             | ❌ non lue                                                                  | Doublon clé publique ?           |
+| `SUPABASE_SECRET_KEY`                  | ❌ non lue dans le code applicatif                                          | Clé service_role (sensible)      |
+| `SUPABASE_JWKS_URL`                    | ❌ non lue                                                                  | JWKS Supabase Auth               |
+| `SUPABASE_ANON_KEY`                    | ❌ non lue dans le code applicatif                                          | Doublon clé anon                 |
 
 ### 🔴 DIVERGENCE CRITIQUE — Clé anon manquante
 
@@ -112,6 +112,7 @@ Le code (`lib/supabase/client.ts`) lit `process.env.NEXT_PUBLIC_SUPABASE_ANON_KE
 **Conséquence directe :** `createBrowserClient` reçoit `undefined` comme clé. Le client Supabase sera `null`. L'application tombera **automatiquement en mode démonstration** (fail-open), accordant à n'importe quel visiteur le rôle admin sans aucune authentification.
 
 **Correction requise avant tout autre travail :**
+
 ```bash
 # Dans .env, ajouter ou renommer :
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<valeur de NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY>
@@ -129,27 +130,30 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<valeur de NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY>
 
 ### Fichiers présents
 
-| Fichier | Ordre | Dépendances déclarées | Taille |
-|---|---|---|---|
-| `schema.sql` | Base (hors migrations) | — | 14,8 KB |
-| `20261028120000_gate_unapproved_users.sql` | Migration 1 | Aucune | 4,1 KB |
-| `20261028121500_transactional_purchase_orders.sql` | Migration 2 | Dépend de migration 1 (commentaire en-tête) | 5,5 KB |
-| `20261028130000_center_scoped_access.sql` | Migration 3 | Dépend de migrations 1 et 2 | 23,2 KB |
-| `seed.sql` | Données démo | Dépend des 3 migrations | 6,8 KB |
+| Fichier                                            | Ordre                  | Dépendances déclarées                       | Taille  |
+| -------------------------------------------------- | ---------------------- | ------------------------------------------- | ------- |
+| `schema.sql`                                       | Base (hors migrations) | —                                           | 14,8 KB |
+| `20261028120000_gate_unapproved_users.sql`         | Migration 1            | Aucune                                      | 4,1 KB  |
+| `20261028121500_transactional_purchase_orders.sql` | Migration 2            | Dépend de migration 1 (commentaire en-tête) | 5,5 KB  |
+| `20261028130000_center_scoped_access.sql`          | Migration 3            | Dépend de migrations 1 et 2                 | 23,2 KB |
+| `seed.sql`                                         | Données démo           | Dépend des 3 migrations                     | 6,8 KB  |
 
 ### Contenu des migrations (résumé)
 
 **Migration 1 — `gate_unapproved_users`**
+
 - Ajoute `profiles.access_status` (text, default `pending`)
 - Redéfinit `current_user_role()` pour filtrer sur `access_status = 'approved'`
 - Redéfinit `record_stock_movement()` avec contrôle du statut
 - Reserre les politiques RLS sur toutes les tables
 
 **Migration 2 — `transactional_purchase_orders`**
+
 - Crée les fonctions RPC `create_purchase_order` et `receive_purchase_order`
 - Retire les droits INSERT/UPDATE/DELETE sur `purchase_orders` et `purchase_order_items`
 
 **Migration 3 — `center_scoped_access`**
+
 - Crée les tables `health_regions`, `health_departments`, `health_centers`
 - Ajoute `center_id` sur toutes les tables métier
 - Crée les RPC `request_center_access`, `review_center_profile`, `current_user_center_id`, `has_center_access`
@@ -160,7 +164,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<valeur de NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY>
 ### Avertissement sur `schema.sql`
 
 Le fichier `schema.sql` est **désynchronisé** avec les migrations. Il représente l'état initial de la base avant toute migration. Son propre commentaire d'en-tête le précise :
-> *"Ce fichier seul ne fournit pas encore l'isolation multi-centres."*
+
+> _"Ce fichier seul ne fournit pas encore l'isolation multi-centres."_
 
 Il ne doit pas être exécuté sur une base existante. Il sert uniquement à initialiser une base vierge **avant** d'appliquer les trois migrations dans l'ordre.
 
@@ -177,6 +182,7 @@ Toutes les vérifications suivantes ont été effectuées via des requêtes HTTP
 L'OpenAPI distante (HTTP 200 confirmé) expose les entités suivantes et **uniquement** celles-ci :
 
 **Tables présentes :**
+
 - `profiles` — colonnes : `id`, `full_name`, `role`, `updated_at`
 - `inventory_items` — colonnes : `id`, `name`, `category`, `sku_batch`, `expiration_date`, `supplier_id`, `quantity`, `min_threshold`, `price`, `created_at`
 - `suppliers` — colonnes : `id`, `name`, `contact_name`, `email`, `phone`, `created_at`
@@ -185,38 +191,39 @@ L'OpenAPI distante (HTTP 200 confirmé) expose les entités suivantes et **uniqu
 - `purchase_order_items` — colonnes : `id`, `order_id`, `item_id`, `description`, `quantity`, `unit_price`
 
 **RPC présentes :**
+
 - `/rpc/record_stock_movement` — ✅ présente
 - `/rpc/current_user_role` — ✅ présente
 
 ### 5.2 Colonnes manquantes (preuves de migrations non appliquées)
 
-| Table | Colonnes attendues (post-migration) | Colonnes absentes (confirmées) |
-|---|---|---|
-| `profiles` | `access_status`, `center_id` | **`access_status` ABSENT, `center_id` ABSENT** |
-| `inventory_items` | `center_id` | **ABSENT** |
-| `suppliers` | `center_id` | **ABSENT** |
-| `stock_movements` | `center_id` | **ABSENT** |
-| `purchase_orders` | `center_id` | **ABSENT** |
-| `purchase_order_items` | `center_id` | **ABSENT** |
+| Table                  | Colonnes attendues (post-migration) | Colonnes absentes (confirmées)                 |
+| ---------------------- | ----------------------------------- | ---------------------------------------------- |
+| `profiles`             | `access_status`, `center_id`        | **`access_status` ABSENT, `center_id` ABSENT** |
+| `inventory_items`      | `center_id`                         | **ABSENT**                                     |
+| `suppliers`            | `center_id`                         | **ABSENT**                                     |
+| `stock_movements`      | `center_id`                         | **ABSENT**                                     |
+| `purchase_orders`      | `center_id`                         | **ABSENT**                                     |
+| `purchase_order_items` | `center_id`                         | **ABSENT**                                     |
 
 ### 5.3 Tables hiérarchiques manquantes
 
-| Table | Statut |
-|---|---|
-| `health_regions` | ❌ HTTP 404 — absente |
+| Table                | Statut                |
+| -------------------- | --------------------- |
+| `health_regions`     | ❌ HTTP 404 — absente |
 | `health_departments` | ❌ HTTP 404 — absente |
-| `health_centers` | ❌ HTTP 404 — absente |
+| `health_centers`     | ❌ HTTP 404 — absente |
 
 ### 5.4 RPC manquantes
 
-| RPC | Statut |
-|---|---|
-| `create_purchase_order` | ❌ HTTP 404 |
+| RPC                      | Statut      |
+| ------------------------ | ----------- |
+| `create_purchase_order`  | ❌ HTTP 404 |
 | `receive_purchase_order` | ❌ HTTP 404 |
-| `request_center_access` | ❌ HTTP 404 |
-| `review_center_profile` | ❌ HTTP 404 |
+| `request_center_access`  | ❌ HTTP 404 |
+| `review_center_profile`  | ❌ HTTP 404 |
 | `current_user_center_id` | ❌ HTTP 404 |
-| `has_center_access` | ❌ HTTP 404 |
+| `has_center_access`      | ❌ HTTP 404 |
 
 ### 5.5 Conclusion sur les migrations
 
@@ -237,14 +244,14 @@ La base est dans l'état du `schema.sql` initial (ou proche), enrichie uniquemen
 
 Testé avec la clé anonyme (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) sans session :
 
-| Table | HTTP (anon, sans session) | Données retournées | Interprétation |
-|---|---|---|---|
-| `profiles` | 200 | 0 lignes | RLS filtre sur `id = auth.uid()` — correct en lecture publique |
-| `inventory_items` | 200 | 0 lignes | RLS bloque ou politique `using(true)` + aucune donnée anon |
-| `suppliers` | 200 | 0 lignes | Idem |
-| `stock_movements` | 200 | 0 lignes | Idem |
-| `purchase_orders` | 200 | 0 lignes | Idem |
-| `purchase_order_items` | 200 | 0 lignes | Idem |
+| Table                  | HTTP (anon, sans session) | Données retournées | Interprétation                                                 |
+| ---------------------- | ------------------------- | ------------------ | -------------------------------------------------------------- |
+| `profiles`             | 200                       | 0 lignes           | RLS filtre sur `id = auth.uid()` — correct en lecture publique |
+| `inventory_items`      | 200                       | 0 lignes           | RLS bloque ou politique `using(true)` + aucune donnée anon     |
+| `suppliers`            | 200                       | 0 lignes           | Idem                                                           |
+| `stock_movements`      | 200                       | 0 lignes           | Idem                                                           |
+| `purchase_orders`      | 200                       | 0 lignes           | Idem                                                           |
+| `purchase_order_items` | 200                       | 0 lignes           | Idem                                                           |
 
 > ⚠️ **À CONFIRMER** : le HTTP 200 avec 0 lignes peut signifier soit (a) que RLS filtre correctement les utilisateurs non authentifiés, soit (b) qu'il n'y a pas de politique pour `anon` et que le moteur PostgREST retourne vide par défaut. Sans accès au dashboard Supabase → Policies, le détail exact des politiques actives n'est pas vérifiable depuis l'extérieur.
 
@@ -256,18 +263,19 @@ Testé avec la clé anonyme (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) sans sessio
 
 ### Comptages confirmés (méthode : `Content-Range` header, lecture seule)
 
-| Table | Lignes | Source probable |
-|---|---|---|
-| `profiles` | **1** | 1 utilisateur créé |
-| `inventory_items` | **9** | Correspond aux 9 articles du `seed.sql` |
-| `suppliers` | **4** | Correspond aux 4 fournisseurs du `seed.sql` |
-| `stock_movements` | **5** | Correspond aux 5 mouvements du `seed.sql` |
-| `purchase_orders` | **3** | Correspond aux 3 commandes du `seed.sql` |
-| `purchase_order_items` | **0** | Lignes de commande absentes (seed non exécuté complètement ou contraintes bloquantes) |
+| Table                  | Lignes | Source probable                                                                       |
+| ---------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `profiles`             | **1**  | 1 utilisateur créé                                                                    |
+| `inventory_items`      | **9**  | Correspond aux 9 articles du `seed.sql`                                               |
+| `suppliers`            | **4**  | Correspond aux 4 fournisseurs du `seed.sql`                                           |
+| `stock_movements`      | **5**  | Correspond aux 5 mouvements du `seed.sql`                                             |
+| `purchase_orders`      | **3**  | Correspond aux 3 commandes du `seed.sql`                                              |
+| `purchase_order_items` | **0**  | Lignes de commande absentes (seed non exécuté complètement ou contraintes bloquantes) |
 
 ### Identité des données
 
 **Les données présentes dans la base distante sont les données de démonstration définies dans `seed.sql`**, incluant :
+
 - 9 articles médicaux fictifs (Amoxicilline, Gants, Seringues, etc.) avec des dates d'expiration relatives à `current_date`
 - 4 fournisseurs fictifs (Laborex, Copharmed, Medline Afrique, Pharmivoire) avec des contacts nommés
 - 5 mouvements de stock horodatés au 27 octobre 2026
@@ -280,7 +288,8 @@ Testé avec la clé anonyme (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) sans sessio
 ### Rattachement aux centres
 
 **À CONFIRMER** — La colonne `center_id` n'existe pas encore. Toutes les données sont donc rattachées à aucun centre (impossible de les isoler par centre post-migration sans attribution manuelle). Le README documente cette situation :
-> *"La migration ne devine pas le centre des données existantes : les `center_id` historiques restent NULL."*
+
+> _"La migration ne devine pas le centre des données existantes : les `center_id` historiques restent NULL."_
 
 ---
 
@@ -306,23 +315,23 @@ Testé avec la clé anonyme (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) sans sessio
 
 ### État Git
 
-| Indicateur | Valeur |
-|---|---|
-| Remote configuré | `https://github.com/nonoAkreb/Social-media-ai-agent-.git` |
-| Commits sur `main` | **Aucun** — branche vide |
+| Indicateur                    | Valeur                                                           |
+| ----------------------------- | ---------------------------------------------------------------- |
+| Remote configuré              | `https://github.com/nonoAkreb/Social-media-ai-agent-.git`        |
+| Commits sur `main`            | **Aucun** — branche vide                                         |
 | Commits sur d'autres branches | 1 commit dans l'historique Git : `4d5592ab` ("Cascade snapshot") |
-| Fichiers stagés | Aucun |
-| Stash | Vide |
+| Fichiers stagés               | Aucun                                                            |
+| Stash                         | Vide                                                             |
 
 > ⚠️ **INCOHÉRENCE CRITIQUE :** Le remote pointe vers un dépôt GitHub nommé `Social-media-ai-agent-`, qui n'a aucun rapport avec MediStock. Si ce dépôt est public ou accessible à d'autres personnes, toute commande `git push` enverrait le code MediStock vers ce dépôt. À corriger avant tout commit.
 
 ### Fichiers sensibles
 
-| Fichier | Dans `.gitignore` | Risque |
-|---|---|---|
-| `.env` (7 clés dont `SUPABASE_SECRET_KEY`) | ✅ Oui | Non versionné — OK |
-| `.claude/settings.json` (token API tiers + URL proxy) | ✅ Oui | Non versionné — mais token exposé localement |
-| `.env.example` | ❌ Versionné | Ne contient que 2 clés sur 7 — documentation incomplète |
+| Fichier                                               | Dans `.gitignore` | Risque                                                  |
+| ----------------------------------------------------- | ----------------- | ------------------------------------------------------- |
+| `.env` (7 clés dont `SUPABASE_SECRET_KEY`)            | ✅ Oui            | Non versionné — OK                                      |
+| `.claude/settings.json` (token API tiers + URL proxy) | ✅ Oui            | Non versionné — mais token exposé localement            |
+| `.env.example`                                        | ❌ Versionné      | Ne contient que 2 clés sur 7 — documentation incomplète |
 
 > ⚠️ `.claude/settings.json` contient un `ANTHROPIC_AUTH_TOKEN` et une URL de proxy (`xkiro.com`). Ce token est une clé d'accès à un service tiers. Bien qu'en dehors du scope Git, sa présence dans le workspace est un risque si le répertoire est partagé (partage de dossier, archivage zip, accès à la machine).
 
@@ -332,19 +341,19 @@ Testé avec la clé anonyme (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) sans sessio
 
 ### Tableau de synthèse
 
-| Élément | État local (code) | État distant (Supabase) | Impact |
-|---|---|---|---|
-| `profiles.access_status` | Défini dans migration 1 | **ABSENT** | Tout utilisateur authentifié peut lire/écrire sans contrôle d'approbation |
-| `profiles.center_id` | Défini dans migration 3 | **ABSENT** | Pas d'isolation multi-centres |
-| `center_id` sur tables métier | Défini dans migration 3 | **ABSENT** | Données non rattachées, isolation impossible |
-| Tables `health_*` | Définies dans migration 3 | **ABSENTES** | Page `/pending` et flux d'affiliation non fonctionnels |
-| RPC `create_purchase_order` | Définie dans migration 2 | **ABSENTE** | Création de commandes non fonctionnelle en mode Supabase |
-| RPC `receive_purchase_order` | Définie dans migration 2 | **ABSENTE** | Réception de commandes non fonctionnelle |
-| RPC `request_center_access` | Définie dans migration 3 | **ABSENTE** | Flux d'affiliation à un centre non fonctionnel |
-| RPC `review_center_profile` | Définie dans migration 3 | **ABSENTE** | Approbation/suspension d'utilisateurs non fonctionnelle |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Lu dans le code | **ABSENT du `.env`** | Application en mode démo forcé (fail-open) |
-| Route `app/dasboard/` | Présente localement | À CONFIRMER | Route non sécurisée si déployée |
-| Données de démo | Dans `seed.sql` uniquement | **PRÉSENTES en base** | Stock fictif dans la base Supabase |
+| Élément                         | État local (code)          | État distant (Supabase) | Impact                                                                    |
+| ------------------------------- | -------------------------- | ----------------------- | ------------------------------------------------------------------------- |
+| `profiles.access_status`        | Défini dans migration 1    | **ABSENT**              | Tout utilisateur authentifié peut lire/écrire sans contrôle d'approbation |
+| `profiles.center_id`            | Défini dans migration 3    | **ABSENT**              | Pas d'isolation multi-centres                                             |
+| `center_id` sur tables métier   | Défini dans migration 3    | **ABSENT**              | Données non rattachées, isolation impossible                              |
+| Tables `health_*`               | Définies dans migration 3  | **ABSENTES**            | Page `/pending` et flux d'affiliation non fonctionnels                    |
+| RPC `create_purchase_order`     | Définie dans migration 2   | **ABSENTE**             | Création de commandes non fonctionnelle en mode Supabase                  |
+| RPC `receive_purchase_order`    | Définie dans migration 2   | **ABSENTE**             | Réception de commandes non fonctionnelle                                  |
+| RPC `request_center_access`     | Définie dans migration 3   | **ABSENTE**             | Flux d'affiliation à un centre non fonctionnel                            |
+| RPC `review_center_profile`     | Définie dans migration 3   | **ABSENTE**             | Approbation/suspension d'utilisateurs non fonctionnelle                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Lu dans le code            | **ABSENT du `.env`**    | Application en mode démo forcé (fail-open)                                |
+| Route `app/dasboard/`           | Présente localement        | À CONFIRMER             | Route non sécurisée si déployée                                           |
+| Données de démo                 | Dans `seed.sql` uniquement | **PRÉSENTES en base**   | Stock fictif dans la base Supabase                                        |
 
 ### Comportement de l'application avec la base dans son état actuel
 
@@ -359,16 +368,16 @@ Si l'application était déployée aujourd'hui avec le `.env` actuel :
 
 ## 11. Risques bloquants (avant de procéder à REM-01)
 
-| # | Risque | Criticité | Preuve |
-|---|---|---|---|
-| **B1** | `NEXT_PUBLIC_SUPABASE_ANON_KEY` absente du `.env` → mode démo forcé | 🔴 BLOQUANT | Vérifié dans `.env` et `lib/supabase/client.ts` |
-| **B2** | 0 migration appliquée → aucun contrôle d'approbation actif en base | 🔴 BLOQUANT | OpenAPI distante : `profiles.access_status` absent |
-| **B3** | Données de démonstration présentes en base Supabase de production | 🔴 BLOQUANT | Content-Range : 9 articles, 4 fournisseurs, 5 mouvements, 3 commandes |
-| **B4** | Aucun outil de sauvegarde disponible localement | 🔴 BLOQUANT | pg_dump et Supabase CLI absents |
-| **B5** | Remote Git pointe vers un dépôt sans rapport (`Social-media-ai-agent-`) | 🟠 IMPORTANT | `git remote -v` confirmé |
-| **B6** | TypeScript : 8 erreurs de type dans `callback/route.ts` et `dashboard/page.tsx` | 🟠 IMPORTANT | `tsc --noEmit` : exit code 1 |
-| **B7** | Route fantôme `app/dasboard/page.tsx` | 🟠 IMPORTANT | Fichier vérifié, route non sécurisée |
-| **B8** | `.env.example` documente 2 clés sur 7 | 🟡 MINEUR | Vérifié |
+| #      | Risque                                                                          | Criticité    | Preuve                                                                |
+| ------ | ------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------- |
+| **B1** | `NEXT_PUBLIC_SUPABASE_ANON_KEY` absente du `.env` → mode démo forcé             | 🔴 BLOQUANT  | Vérifié dans `.env` et `lib/supabase/client.ts`                       |
+| **B2** | 0 migration appliquée → aucun contrôle d'approbation actif en base              | 🔴 BLOQUANT  | OpenAPI distante : `profiles.access_status` absent                    |
+| **B3** | Données de démonstration présentes en base Supabase de production               | 🔴 BLOQUANT  | Content-Range : 9 articles, 4 fournisseurs, 5 mouvements, 3 commandes |
+| **B4** | Aucun outil de sauvegarde disponible localement                                 | 🔴 BLOQUANT  | pg_dump et Supabase CLI absents                                       |
+| **B5** | Remote Git pointe vers un dépôt sans rapport (`Social-media-ai-agent-`)         | 🟠 IMPORTANT | `git remote -v` confirmé                                              |
+| **B6** | TypeScript : 8 erreurs de type dans `callback/route.ts` et `dashboard/page.tsx` | 🟠 IMPORTANT | `tsc --noEmit` : exit code 1                                          |
+| **B7** | Route fantôme `app/dasboard/page.tsx`                                           | 🟠 IMPORTANT | Fichier vérifié, route non sécurisée                                  |
+| **B8** | `.env.example` documente 2 clés sur 7                                           | 🟡 MINEUR    | Vérifié                                                               |
 
 ---
 
@@ -395,16 +404,16 @@ Avant d'exécuter la moindre modification, les conditions suivantes doivent êtr
 
 ## 13. Informations restant à confirmer (À CONFIRMER)
 
-| # | Information | Pourquoi non vérifiable en lecture seule |
-|---|---|---|
-| AC1 | Plan Supabase (Free / Pro / Team) | Nécessite accès au dashboard Supabase |
-| AC2 | Rétention des sauvegardes automatiques | Dépend du plan |
-| AC3 | Fournisseurs Auth activés (Email, Google) et état "Disable signups" | Nécessite accès au dashboard Supabase → Auth |
-| AC4 | Politiques RLS détaillées actuellement actives en base | Nécessite `SELECT * FROM pg_policies` ou dashboard |
-| AC5 | Existence d'autres utilisateurs dans `auth.users` non visibles via REST | La table `auth.users` n'est pas exposée via REST publique |
-| AC6 | Environnement de déploiement réel de Next.js (Vercel, Railway, E2B, local…) | Aucun fichier de config de déploiement présent |
-| AC7 | Versions exactes des packages installés sur le serveur de production | Application non déployée en production à ce stade |
-| AC8 | Contenu exact du commit `4d5592ab` ("Cascade snapshot") | Commit sur un ref isolé, non attaché à `main` |
+| #   | Information                                                                 | Pourquoi non vérifiable en lecture seule                  |
+| --- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| AC1 | Plan Supabase (Free / Pro / Team)                                           | Nécessite accès au dashboard Supabase                     |
+| AC2 | Rétention des sauvegardes automatiques                                      | Dépend du plan                                            |
+| AC3 | Fournisseurs Auth activés (Email, Google) et état "Disable signups"         | Nécessite accès au dashboard Supabase → Auth              |
+| AC4 | Politiques RLS détaillées actuellement actives en base                      | Nécessite `SELECT * FROM pg_policies` ou dashboard        |
+| AC5 | Existence d'autres utilisateurs dans `auth.users` non visibles via REST     | La table `auth.users` n'est pas exposée via REST publique |
+| AC6 | Environnement de déploiement réel de Next.js (Vercel, Railway, E2B, local…) | Aucun fichier de config de déploiement présent            |
+| AC7 | Versions exactes des packages installés sur le serveur de production        | Application non déployée en production à ce stade         |
+| AC8 | Contenu exact du commit `4d5592ab` ("Cascade snapshot")                     | Commit sur un ref isolé, non attaché à `main`             |
 
 ---
 
@@ -420,4 +429,4 @@ La base contient uniquement des données de démonstration issues de `seed.sql` 
 
 ---
 
-*Rapport généré le 28 octobre 2026 dans le cadre de REM-00 — Audit opérationnel préalable.*
+_Rapport généré le 28 octobre 2026 dans le cadre de REM-00 — Audit opérationnel préalable._

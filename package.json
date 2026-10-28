@@ -1,1 +1,38 @@
-{"name":"clinique-stock","version":"1.0.0","private":true,"scripts":{"dev":"next dev -H 0.0.0.0","build":"next build","start":"next start -H 0.0.0.0"},"dependencies":{"@supabase/server":"^1.9.2","@supabase/ssr":"^0.6.1","@supabase/supabase-js":"^2.118.0","lucide-react":"^0.468.0","next":"^16.4.3","react":"^19.0.0","react-dom":"^19.0.0"},"devDependencies":{"@types/node":"^22.10.5","@types/react":"^19.0.6","@types/react-dom":"^19.0.3","autoprefixer":"^10.4.20","postcss":"^8.4.49","prettier":"^3.9.10","supabase":"^2.122.0","tailwindcss":"^3.4.17","typescript":"^5.7.3"}}
+{
+  "name": "clinique-stock",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format-check": "prettier --check .",
+    "test": "supabase test db"
+  },
+  "dependencies": {
+    "@supabase/server": "^1.9.2",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.118.0",
+    "lucide-react": "^0.468.0",
+    "next": "^16.4.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.3",
+    "postcss": "^8.4.49",
+    "prettier": "^3.9.10",
+    "supabase": "^2.122.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}

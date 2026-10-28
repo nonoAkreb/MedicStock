@@ -12,17 +12,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  useEffect(() => {
+  const [error, setError] = useState(() => {
+    if (typeof window === 'undefined') return '';
     const message = new URLSearchParams(window.location.search).get('error');
-    if (message)
-      setError(
-        message === 'oauth'
-          ? 'La connexion Google a échoué. Veuillez réessayer.'
-          : message === 'session'
-            ? 'Votre session a expiré ou n’a pas été conservée. Reconnectez-vous pour ouvrir le tableau de bord.'
-            : 'Une erreur de connexion s’est produite. Réessayez.',
-      );
+    return message === 'oauth'
+      ? 'La connexion Google a échoué. Veuillez réessayer.'
+      : message === 'session'
+        ? 'Votre session a expiré ou n’a pas été conservée. Reconnectez-vous pour ouvrir le tableau de bord.'
+        : message
+          ? 'Une erreur de connexion s’est produite. Réessayez.'
+          : '';
+  });
+  useEffect(() => {
     if (supabase)
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) router.replace('/dashboard');

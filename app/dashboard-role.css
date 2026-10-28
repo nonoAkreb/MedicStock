@@ -1,1 +1,42 @@
-.dashboard-loading-overlay{position:fixed;inset:76px 0 0 252px;z-index:30;overflow:auto;background:#f7f9f8;padding:30px 38px}.dashboard-loading-inner{max-width:1450px;margin:0 auto}@media(max-width:760px){.dashboard-loading-overlay{inset:62px 0 0;padding:20px 15px}}@media print{.sidebar,.topbar,.no-print,footer{display:none!important}.main{margin-left:0!important}.content{max-width:none!important;padding:12px!important}.card,.panel{break-inside:avoid;box-shadow:none!important}.dashboard-grid,.bottom-grid{break-inside:avoid}}
+.dashboard-loading-overlay {
+  position: fixed;
+  inset: 76px 0 0 252px;
+  z-index: 30;
+  overflow: auto;
+  background: #f7f9f8;
+  padding: 30px 38px;
+}
+.dashboard-loading-inner {
+  max-width: 1450px;
+  margin: 0 auto;
+}
+@media (max-width: 760px) {
+  .dashboard-loading-overlay {
+    inset: 62px 0 0;
+    padding: 20px 15px;
+  }
+}
+@media print {
+  .sidebar,
+  .topbar,
+  .no-print,
+  footer {
+    display: none !important;
+  }
+  .main {
+    margin-left: 0 !important;
+  }
+  .content {
+    max-width: none !important;
+    padding: 12px !important;
+  }
+  .card,
+  .panel {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+  .dashboard-grid,
+  .bottom-grid {
+    break-inside: avoid;
+  }
+}

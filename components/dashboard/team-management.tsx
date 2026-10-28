@@ -44,7 +44,8 @@ export function TeamManagement() {
   }, []);
 
   useEffect(() => {
-    void loadProfiles();
+    const t = setTimeout(() => void loadProfiles(), 0);
+    return () => clearTimeout(t);
   }, [loadProfiles]);
 
   const review = async (profile: CenterProfile, accessStatus: 'approved' | 'suspended') => {
@@ -61,7 +62,9 @@ export function TeamManagement() {
       if (reviewError) {
         setError(`Mise à jour de l’accès impossible : ${formatError(reviewError)}`);
       } else {
-        setNotice(accessStatus === 'approved' ? 'Accès au centre approuvé.' : 'Accès au centre suspendu.');
+        setNotice(
+          accessStatus === 'approved' ? 'Accès au centre approuvé.' : 'Accès au centre suspendu.',
+        );
         await loadProfiles();
       }
     } finally {
@@ -74,75 +77,121 @@ export function TeamManagement() {
       <div className="panel-head">
         <div>
           <div className="panel-title">Membres du centre</div>
-          <div className="panel-sub">Les droits sont limités au centre de santé de l’administrateur connecté.</div>
+          <div className="panel-sub">
+            Les droits sont limités au centre de santé de l’administrateur connecté.
+          </div>
         </div>
-        <button className="btn secondary" type="button" onClick={() => void loadProfiles()} disabled={loading}>
+        <button
+          className="btn secondary"
+          type="button"
+          onClick={() => void loadProfiles()}
+          disabled={loading}
+        >
           <RefreshCw size={14} /> Actualiser
         </button>
       </div>
-      {error && <p role="alert" className="panel-sub">{error}</p>}
-      {notice && <p role="status" className="panel-sub">{notice}</p>}
+      {error && (
+        <p role="alert" className="panel-sub">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="panel-sub">
+          {notice}
+        </p>
+      )}
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>MEMBRE</th><th>RÔLE</th><th>ACCÈS</th><th>ACTION</th></tr>
+            <tr>
+              <th>MEMBRE</th>
+              <th>RÔLE</th>
+              <th>ACCÈS</th>
+              <th>ACTION</th>
+            </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4}>Chargement des membres…</td></tr>
-            ) : profiles.length === 0 ? (
-              <tr><td colSpan={4}>Aucun membre rattaché à ce centre.</td></tr>
-            ) : profiles.map(profile => (
-              <tr key={profile.id}>
-                <td>
-                  <div className="item-name">
-                    <div className="avatar" style={{ width: 30, height: 30, fontSize: 10 }}>
-                      <UserRound size={14} />
-                    </div>
-                    <strong>{profile.full_name || 'Utilisateur sans nom'}</strong>
-                  </div>
-                </td>
-                <td>
-                  {profile.role === 'admin' ? roleLabels.admin : (
-                    <select
-                      aria-label={`Rôle de ${profile.full_name || 'l’utilisateur'}`}
-                      value={roles[profile.id] || profile.role}
-                      onChange={event => {
-                        const selectedRole = event.target.value;
-                        if (selectedRole === 'pharmacist' || selectedRole === 'nurse') {
-                          setRoles(current => ({ ...current, [profile.id]: selectedRole }));
-                        }
-                      }}
-                    >
-                      <option value="pharmacist">Pharmacien</option>
-                      <option value="nurse">Infirmier</option>
-                    </select>
-                  )}
-                </td>
-                <td>
-                  <span className={`pill ${profile.access_status === 'approved' ? 'green' : profile.access_status === 'suspended' ? 'red' : 'yellow'}`}>
-                    {profile.access_status === 'approved' ? 'Actif' : profile.access_status === 'suspended' ? 'Suspendu' : 'En attente'}
-                  </span>
-                </td>
-                <td>
-                  {profile.role !== 'admin' && (
-                    profile.access_status === 'approved' ? (
-                      <button className="link-btn" type="button" disabled={busyId === profile.id} onClick={() => void review(profile, 'suspended')}>
-                        Suspendre
-                      </button>
-                    ) : (
-                      <button className="link-btn" type="button" disabled={busyId === profile.id} onClick={() => void review(profile, 'approved')}>
-                        <Check size={14} /> Approuver
-                      </button>
-                    )
-                  )}
-                </td>
+              <tr>
+                <td colSpan={4}>Chargement des membres…</td>
               </tr>
-            ))}
+            ) : profiles.length === 0 ? (
+              <tr>
+                <td colSpan={4}>Aucun membre rattaché à ce centre.</td>
+              </tr>
+            ) : (
+              profiles.map((profile) => (
+                <tr key={profile.id}>
+                  <td>
+                    <div className="item-name">
+                      <div className="avatar" style={{ width: 30, height: 30, fontSize: 10 }}>
+                        <UserRound size={14} />
+                      </div>
+                      <strong>{profile.full_name || 'Utilisateur sans nom'}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    {profile.role === 'admin' ? (
+                      roleLabels.admin
+                    ) : (
+                      <select
+                        aria-label={`Rôle de ${profile.full_name || 'l’utilisateur'}`}
+                        value={roles[profile.id] || profile.role}
+                        onChange={(event) => {
+                          const selectedRole = event.target.value;
+                          if (selectedRole === 'pharmacist' || selectedRole === 'nurse') {
+                            setRoles((current) => ({ ...current, [profile.id]: selectedRole }));
+                          }
+                        }}
+                      >
+                        <option value="pharmacist">Pharmacien</option>
+                        <option value="nurse">Infirmier</option>
+                      </select>
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`pill ${profile.access_status === 'approved' ? 'green' : profile.access_status === 'suspended' ? 'red' : 'yellow'}`}
+                    >
+                      {profile.access_status === 'approved'
+                        ? 'Actif'
+                        : profile.access_status === 'suspended'
+                          ? 'Suspendu'
+                          : 'En attente'}
+                    </span>
+                  </td>
+                  <td>
+                    {profile.role !== 'admin' &&
+                      (profile.access_status === 'approved' ? (
+                        <button
+                          className="link-btn"
+                          type="button"
+                          disabled={busyId === profile.id}
+                          onClick={() => void review(profile, 'suspended')}
+                        >
+                          Suspendre
+                        </button>
+                      ) : (
+                        <button
+                          className="link-btn"
+                          type="button"
+                          disabled={busyId === profile.id}
+                          onClick={() => void review(profile, 'approved')}
+                        >
+                          <Check size={14} /> Approuver
+                        </button>
+                      ))}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      <div className="panel-sub"><ShieldCheck size={14} /> L’attribution d’un rôle administrateur est réservée à l’opérateur de la base.</div>
+      <div className="panel-sub">
+        <ShieldCheck size={14} /> L’attribution d’un rôle administrateur est réservée à l’opérateur
+        de la base.
+      </div>
     </section>
   );
 }
