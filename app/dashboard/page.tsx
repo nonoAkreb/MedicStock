@@ -8,8 +8,11 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  // Keep the no-credentials local demo available; production uses the server check below.
-  if (!url || !key) return <DashboardClient />;
+  // Mode démo : uniquement si explicitement activé, jamais en fallback d'une config manquante.
+  if (!url || !key) {
+    if (process.env.NEXT_PUBLIC_MEDISTOCK_DEMO === '1') return <DashboardClient />;
+    throw new Error('Configuration Supabase manquante');
+  }
 
   const cookieStore = await cookies();
   const supabase = createServerClient(url, key, {
