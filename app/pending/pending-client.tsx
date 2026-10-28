@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity, LogOut, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { formatError } from '@/lib/errors';
 
 type Region = { id: string; name: string };
 type Department = { id: string; region_id: string; name: string };
@@ -61,11 +62,11 @@ export default function PendingAccessPage() {
       if (!active) return;
       const directoryError = regionsError || departmentsError || centersError;
       if (profileError || !profile) {
-        setMessage(`Impossible de vérifier votre statut${profileError ? ` : ${profileError.message}` : '.'}`);
+        setMessage(`Impossible de vérifier votre statut${profileError ? ` : ${formatError(profileError)}` : '.'}`);
         return;
       }
       if (directoryError) {
-        setMessage(`Impossible de charger la hiérarchie des centres : ${directoryError.message}`);
+        setMessage(`Impossible de charger la hiérarchie des centres : ${formatError(directoryError)}`);
         return;
       }
       setRegions(regionRows || []);
@@ -95,7 +96,7 @@ export default function PendingAccessPage() {
     setBusy(true);
     const { error } = await supabase.rpc('request_center_access', { p_center_id: centerId });
     if (error) {
-      setMessage(`Envoi de la demande impossible : ${error.message}`);
+      setMessage(`Envoi de la demande impossible : ${formatError(error)}`);
       setBusy(false);
       return;
     }
@@ -110,7 +111,7 @@ export default function PendingAccessPage() {
     setBusy(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
-      setMessage(`Déconnexion impossible : ${error.message}`);
+      setMessage(`Déconnexion impossible : ${formatError(error)}`);
       setBusy(false);
       return;
     }
