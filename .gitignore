@@ -1,0 +1,8 @@
+.next/
+node_modules/
+.env*
+!.env.example
+.claude/
+*.tsbuildinfo
+*.ps1
+supabase/.temp/
