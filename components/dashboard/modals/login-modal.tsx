@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { ROLES } from '@/lib/dashboard/roles';
 import { X } from 'lucide-react';
 
 export function LoginModal({

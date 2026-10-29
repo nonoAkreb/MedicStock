@@ -1,4 +1,5 @@
 'use client';
+import { ROLES } from '@/lib/dashboard/roles';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatError } from '@/lib/errors';
@@ -83,7 +84,7 @@ export function useCenterData() {
           ]);
           const nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
           let nextExpenses = expenses;
-          if (p.role === 'admin') {
+          if (p.role === ROLES.admin) {
             const firstMonth = new Date();
             firstMonth.setDate(1);
             firstMonth.setMonth(firstMonth.getMonth() - 5);

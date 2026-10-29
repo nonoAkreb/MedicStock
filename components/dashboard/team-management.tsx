@@ -1,5 +1,6 @@
 'use client';
 
+import { ROLES, roleLabel, type Role } from '@/lib/dashboard/roles';
 import { useCallback, useEffect, useState } from 'react';
 import { Check, RefreshCw, ShieldCheck, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
@@ -8,19 +9,15 @@ import { formatError } from '@/lib/errors';
 type CenterProfile = {
   id: string;
   full_name: string;
-  role: 'admin' | 'pharmacist' | 'nurse';
+  role: Role;
   access_status: 'pending' | 'approved' | 'suspended';
 };
 
-const roleLabels = {
-  admin: 'Administrateur',
-  pharmacist: 'Pharmacien',
-  nurse: 'Infirmier',
-};
+
 
 export function TeamManagement() {
   const [profiles, setProfiles] = useState<CenterProfile[]>([]);
-  const [roles, setRoles] = useState<Record<string, 'pharmacist' | 'nurse'>>({});
+  const [roles, setRoles] = useState<Record<string, Role>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState('');
   const [error, setError] = useState('');
@@ -57,7 +54,7 @@ export function TeamManagement() {
       const { error: reviewError } = await supabase.rpc('review_center_profile', {
         p_user_id: profile.id,
         p_access_status: accessStatus,
-        p_role: roles[profile.id] || (profile.role === 'pharmacist' ? 'pharmacist' : 'nurse'),
+        p_role: roles[profile.id] || (profile.role === ROLES.pharmacist ? ROLES.pharmacist : ROLES.nurse),
       });
       if (reviewError) {
         setError(`Mise à jour de l’accès impossible : ${formatError(reviewError)}`);
@@ -131,15 +128,15 @@ export function TeamManagement() {
                     </div>
                   </td>
                   <td>
-                    {profile.role === 'admin' ? (
-                      roleLabels.admin
+                    {profile.role === ROLES.admin ? (
+                      roleLabel.admin
                     ) : (
                       <select
                         aria-label={`Rôle de ${profile.full_name || 'l’utilisateur'}`}
                         value={roles[profile.id] || profile.role}
                         onChange={(event) => {
                           const selectedRole = event.target.value;
-                          if (selectedRole === 'pharmacist' || selectedRole === 'nurse') {
+                          if (selectedRole === ROLES.pharmacist || selectedRole === ROLES.nurse) {
                             setRoles((current) => ({ ...current, [profile.id]: selectedRole }));
                           }
                         }}
@@ -161,7 +158,7 @@ export function TeamManagement() {
                     </span>
                   </td>
                   <td>
-                    {profile.role !== 'admin' &&
+                    {profile.role !== ROLES.admin &&
                       (profile.access_status === 'approved' ? (
                         <button
                           className="link-btn"
