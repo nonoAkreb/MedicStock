@@ -2,11 +2,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatError } from '@/lib/errors';
-import {
-  AdminDashboard,
-  NurseDashboard,
-  PharmacistDashboard,
-} from '@/components/dashboard/role-dashboards';
+import dynamic from 'next/dynamic';
+const NurseDashboard = dynamic(() =>
+  import('@/components/dashboard/role-dashboards/nurse').then((m) => m.NurseDashboard),
+);
+const PharmacistDashboard = dynamic(() =>
+  import('@/components/dashboard/role-dashboards/pharmacist').then((m) => m.PharmacistDashboard),
+);
+const AdminDashboard = dynamic(() =>
+  import('@/components/dashboard/role-dashboards/admin').then((m) => m.AdminDashboard),
+);
 import { DashboardSkeleton } from '@/components/dashboard-skeleton';
 import { PurchaseOrderForm, type PurchaseOrderDraft } from '@/components/dashboard/purchase-order-form';
 import { TeamManagement } from '@/components/dashboard/team-management';
