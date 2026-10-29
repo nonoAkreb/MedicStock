@@ -25,6 +25,7 @@ import { categoryLabel } from '@/lib/dashboard/constants';
 import { dateIn, uid } from '@/lib/dashboard/format';
 import type { Item, Movement, Order, OrderLine } from '@/lib/dashboard/types';
 import { archiveItem, upsertItem } from '@/lib/services/inventory';
+import { updateCenter } from '@/lib/services/centers';
 import { createSupplier } from '@/lib/services/suppliers';
 import { createOrder, receiveOrder as receiveOrderRpc } from '@/lib/services/orders';
 import { recordMovement } from '@/lib/services/movements';
@@ -51,6 +52,8 @@ export default function Home() {
     setMovements,
     orders,
     setOrders,
+    center,
+    setCenter,
     expenses,
     profileCounts,
     role,
@@ -166,13 +169,22 @@ export default function Home() {
       } = await supabase.auth.getSession();
       const { data: p } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, center:health_centers(name, city, currency, alert_days_before, health_departments(name))')
         .eq('id', session?.user.id)
         .maybeSingle();
       if (p?.access_status !== 'approved' || !p?.center_id) {
         window.location.assign('/pending');
         return;
       }
+      if (p?.center)
+        setCenter({
+          id: p.center_id,
+          name: p.center.name,
+          city: p.center.city,
+          currency: p.center.currency,
+          alert_days_before: p.center.alert_days_before,
+          department_name: p.center.health_departments?.name,
+        });
       setName(p?.full_name || String(f.get('email')));
       setRole(p?.role || 'nurse');
       setAuthed(true);
@@ -528,6 +540,33 @@ export default function Home() {
     URL.revokeObjectURL(a.href);
     notify('Rapport CSV téléchargé');
   };
+  const saveCenter = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    try {
+      const f = new FormData(e.currentTarget);
+      const next = {
+        name: String(f.get('name')),
+        city: String(f.get('city')) || null,
+        currency: String(f.get('currency')),
+        alertDaysBefore: Number(f.get('alert_days_before')),
+      };
+      if (supabase) {
+        const { center: updated, error } = await updateCenter(supabase, next);
+        if (error || !updated) {
+          notify(formatError(error));
+          return;
+        }
+        setCenter({ ...updated, department_name: center?.department_name });
+      } else if (center) {
+        setCenter({ ...center, ...next, alert_days_before: next.alertDaysBefore });
+      }
+      notify('Préférences enregistrées');
+    } finally {
+      setBusy(false);
+    }
+  };
   if (dataError)
     return (
       <main className="auth-shell">
@@ -560,6 +599,7 @@ export default function Home() {
   };
   return (
     <DashboardShell
+      center={center}
       nav={nav}
       page={page}
       onNavigate={switchPage}
@@ -704,7 +744,15 @@ export default function Home() {
         />
       )}
       {page === 'team' && role === 'admin' && <TeamManagement />}
-      {page === 'settings' && <SettingsPage isLive={!!supabase} onNotify={notify} />}
+      {page === 'settings' && (
+        <SettingsPage
+          key={center?.id || 'center'}
+          isLive={!!supabase}
+          center={center}
+          busy={busy}
+          onSave={saveCenter}
+        />
+      )}
     </DashboardShell>
   );
 }

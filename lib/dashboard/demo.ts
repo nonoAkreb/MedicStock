@@ -257,3 +257,12 @@ export function loadDemo(): DemoData | null {
 export function saveDemo(data: DemoData) {
   localStorage.setItem(DEMO_KEY, JSON.stringify(data));
 }
+
+export const DEMO_CENTER = {
+  id: 'demo-center',
+  name: 'Clinique du Lagon',
+  city: 'Abidjan, Côte d’Ivoire',
+  currency: 'XOF',
+  alert_days_before: 90,
+  department_name: 'Abidjan',
+};

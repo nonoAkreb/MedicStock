@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatError } from '@/lib/errors';
-import type { Item, Movement, Order, Supplier } from '@/lib/dashboard/types';
-import { initialMovements, loadDemo, makeItems, orderSeed, saveDemo, suppliersSeed } from '@/lib/dashboard/demo';
+import type { Center, Item, Movement, Order, Supplier } from '@/lib/dashboard/types';
+import { DEMO_CENTER, initialMovements, loadDemo, makeItems, orderSeed, saveDemo, suppliersSeed } from '@/lib/dashboard/demo';
 import { listItems } from '@/lib/services/inventory';
 import { listSuppliers } from '@/lib/services/suppliers';
 import { listMovements, listExpenseRows } from '@/lib/services/movements';
@@ -15,6 +15,7 @@ export function useCenterData() {
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => (supabase ? [] : suppliersSeed));
   const [movements, setMovements] = useState<Movement[]>(() => (supabase ? [] : initialMovements));
   const [orders, setOrders] = useState<Order[]>(() => (supabase ? [] : orderSeed));
+  const [center, setCenter] = useState<Center | null>(() => (supabase ? null : DEMO_CENTER));
   const [role, setRole] = useState('pharmacist');
   const [name, setName] = useState('Aïcha Koné');
   const [email, setEmail] = useState('');
@@ -63,6 +64,15 @@ export function useCenterData() {
             return;
           }
           if (!p) throw new Error('Profil utilisateur introuvable.');
+          if (p.center)
+            setCenter({
+              id: p.center_id || '',
+              name: p.center.name,
+              city: p.center.city,
+              currency: p.center.currency,
+              alert_days_before: p.center.alert_days_before,
+              department_name: p.center.health_departments?.name,
+            });
           setName(p.full_name || session.user.email || 'Utilisateur');
           setRole(p.role || 'nurse');
           const nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
@@ -180,6 +190,8 @@ export function useCenterData() {
     setMovements,
     orders,
     setOrders,
+    center,
+    setCenter,
     expenses,
     profileCounts,
     role,
