@@ -20,18 +20,6 @@ export async function listMovements(client: SupabaseClient): Promise<Movement[]>
   }));
 }
 
-export type ExpenseRow = { created_at: string; quantity: number; unit_price: number | null };
-
-export async function listExpenseRows(client: SupabaseClient, sinceIso: string) {
-  const { data, error } = await client
-    .from('stock_movements')
-    .select('quantity,unit_price,created_at')
-    .eq('type', 'out')
-    .gte('created_at', sinceIso);
-  if (error) throw new Error(`Chargement des dépenses impossible : ${error.message}`);
-  return (data || []) as ExpenseRow[];
-}
-
 export async function recordMovement(
   client: SupabaseClient,
   args: { itemId: string; type: 'in' | 'out'; quantity: number; reason: string },
