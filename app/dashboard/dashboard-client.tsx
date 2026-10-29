@@ -8,363 +8,62 @@ import {
   PharmacistDashboard,
 } from '@/components/dashboard/role-dashboards';
 import { DashboardSkeleton } from '@/components/dashboard-skeleton';
-import {
-  PurchaseOrderForm,
-  type PurchaseOrderDraft,
-} from '@/components/dashboard/purchase-order-form';
+import { PurchaseOrderForm, type PurchaseOrderDraft } from '@/components/dashboard/purchase-order-form';
 import { TeamManagement } from '@/components/dashboard/team-management';
+import { ItemFormModal } from '@/components/dashboard/modals/item-form';
+import { MovementFormModal } from '@/components/dashboard/modals/movement-form';
+import { SupplierFormModal } from '@/components/dashboard/modals/supplier-form';
+import { LoginModal } from '@/components/dashboard/modals/login-modal';
+import { InventoryPage } from '@/components/dashboard/pages/inventory-page';
+import { MovementsPage } from '@/components/dashboard/pages/movements-page';
+import { SuppliersPage } from '@/components/dashboard/pages/suppliers-page';
+import { OrdersPage } from '@/components/dashboard/pages/orders-page';
+import { SettingsPage } from '@/components/dashboard/pages/settings-page';
+import { DashboardShell } from '@/components/dashboard/shell';
+import { useCenterData } from './use-center-data';
+import { categoryLabel } from '@/lib/dashboard/constants';
+import { dateIn, uid } from '@/lib/dashboard/format';
+import type { Item, Movement, Order, OrderLine } from '@/lib/dashboard/types';
+import { archiveItem, upsertItem } from '@/lib/services/inventory';
+import { createSupplier } from '@/lib/services/suppliers';
+import { createOrder, receiveOrder as receiveOrderRpc } from '@/lib/services/orders';
+import { recordMovement } from '@/lib/services/movements';
 import {
-  Activity,
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowDownRight,
   ArrowLeftRight,
-  ArrowRight,
-  Bell,
   Boxes,
-  CalendarDays,
   Check,
-  ChevronDown,
-  CircleHelp,
   ClipboardList,
-  Clock3,
-  Download,
-  FilePlus2,
-  Filter,
   HandCoins,
-  Hospital,
   LayoutDashboard,
-  LogOut,
-  Menu,
-  MoreHorizontal,
-  Package,
-  PackageCheck,
-  PackagePlus,
-  Pill,
-  Plus,
-  Search,
   Settings,
-  ShieldCheck,
-  ShoppingCart,
-  Stethoscope,
   Truck,
   Users,
-  Warehouse,
-  X,
   type LucideIcon,
 } from 'lucide-react';
 
-type Item = {
-  id: string;
-  name: string;
-  category: 'medication' | 'ppe' | 'surgical' | 'other';
-  sku_batch: string;
-  expiration_date: string | null;
-  supplier_id: string | null;
-  quantity: number;
-  min_threshold: number;
-  price: number;
-  created_at: string;
-  supplier_name?: string;
-};
-type Supplier = { id: string; name: string; contact_name: string; email: string; phone: string };
-type Movement = {
-  id: string;
-  item_id: string;
-  user_id?: string;
-  type: 'in' | 'out';
-  quantity: number;
-  reason: string;
-  created_at: string;
-  item_name?: string;
-  user_name?: string;
-};
-type OrderLine = {
-  item_id: string | null;
-  description: string;
-  quantity: number;
-  unit_price: number;
-};
-type Order = {
-  id: string;
-  reference: string;
-  supplier: string;
-  items: number;
-  amount: number;
-  status: string;
-  date: string;
-  lines?: OrderLine[];
-};
-const today = new Date();
-const dateIn = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-};
-const uid = () => Math.random().toString(36).slice(2, 10);
-const suppliersSeed: Supplier[] = [
-  {
-    id: 's1',
-    name: 'Laborex Côte d’Ivoire',
-    contact_name: 'Aminata Koné',
-    email: 'commandes@laborex.ci',
-    phone: '+225 27 22 44 18 20',
-  },
-  {
-    id: 's2',
-    name: 'Copharmed',
-    contact_name: 'Jean-Marc Yao',
-    email: 'ventes@copharmed.ci',
-    phone: '+225 27 21 75 90 10',
-  },
-  {
-    id: 's3',
-    name: 'Medline Afrique',
-    contact_name: 'Fatou Diabaté',
-    email: 'contact@medline.ci',
-    phone: '+225 07 09 32 11 40',
-  },
-  {
-    id: 's4',
-    name: 'Pharmivoire',
-    contact_name: 'Koffi N’Guessan',
-    email: 'pro@pharmivoire.ci',
-    phone: '+225 27 20 30 44 08',
-  },
-];
-const makeItems = (): Item[] => [
-  {
-    id: 'i1',
-    name: 'Amoxicilline 500 mg',
-    category: 'medication',
-    sku_batch: 'AMX-2408-B12',
-    expiration_date: dateIn(21),
-    supplier_id: 's1',
-    quantity: 124,
-    min_threshold: 100,
-    price: 1850,
-    created_at: dateIn(-30),
-  },
-  {
-    id: 'i2',
-    name: 'Gants chirurgicaux stériles',
-    category: 'ppe',
-    sku_batch: 'GCS-2409-L04',
-    expiration_date: dateIn(212),
-    supplier_id: 's3',
-    quantity: 42,
-    min_threshold: 60,
-    price: 250,
-    created_at: dateIn(-26),
-  },
-  {
-    id: 'i3',
-    name: 'Seringues 5 ml (boîte de 100)',
-    category: 'surgical',
-    sku_batch: 'SRG-2410-A27',
-    expiration_date: dateIn(530),
-    supplier_id: 's2',
-    quantity: 86,
-    min_threshold: 40,
-    price: 5200,
-    created_at: dateIn(-19),
-  },
-  {
-    id: 'i4',
-    name: 'Paracétamol 1 g',
-    category: 'medication',
-    sku_batch: 'PAR-2411-C08',
-    expiration_date: dateIn(56),
-    supplier_id: 's4',
-    quantity: 18,
-    min_threshold: 50,
-    price: 1200,
-    created_at: dateIn(-17),
-  },
-  {
-    id: 'i5',
-    name: 'Masques chirurgicaux Type IIR',
-    category: 'ppe',
-    sku_batch: 'MCH-2407-D18',
-    expiration_date: dateIn(92),
-    supplier_id: 's3',
-    quantity: 230,
-    min_threshold: 150,
-    price: 90,
-    created_at: dateIn(-14),
-  },
-  {
-    id: 'i6',
-    name: 'Sutures résorbables 3/0',
-    category: 'surgical',
-    sku_batch: 'SUT-2406-E03',
-    expiration_date: dateIn(12),
-    supplier_id: 's2',
-    quantity: 9,
-    min_threshold: 15,
-    price: 3400,
-    created_at: dateIn(-12),
-  },
-  {
-    id: 'i7',
-    name: 'Solution hydroalcoolique 500 ml',
-    category: 'other',
-    sku_batch: 'SHA-2410-F05',
-    expiration_date: dateIn(340),
-    supplier_id: 's1',
-    quantity: 76,
-    min_threshold: 30,
-    price: 2200,
-    created_at: dateIn(-10),
-  },
-  {
-    id: 'i8',
-    name: 'Ceftriaxone 1 g injectable',
-    category: 'medication',
-    sku_batch: 'CTX-2405-A11',
-    expiration_date: dateIn(63),
-    supplier_id: 's4',
-    quantity: 24,
-    min_threshold: 35,
-    price: 6800,
-    created_at: dateIn(-8),
-  },
-  {
-    id: 'i9',
-    name: 'Compresses stériles 10×10',
-    category: 'other',
-    sku_batch: 'CMP-2411-B14',
-    expiration_date: dateIn(180),
-    supplier_id: 's3',
-    quantity: 315,
-    min_threshold: 100,
-    price: 75,
-    created_at: dateIn(-6),
-  },
-];
-const initialMovements: Movement[] = [
-  {
-    id: 'm1',
-    item_id: 'i1',
-    type: 'in',
-    quantity: 80,
-    reason: 'delivery',
-    created_at: new Date(Date.now() - 1000 * 60 * 38).toISOString(),
-    item_name: 'Amoxicilline 500 mg',
-    user_name: 'A. Koné',
-  },
-  {
-    id: 'm2',
-    item_id: 'i4',
-    type: 'out',
-    quantity: 12,
-    reason: 'patient_dispense',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    item_name: 'Paracétamol 1 g',
-    user_name: 'M. Traoré',
-  },
-  {
-    id: 'm3',
-    item_id: 'i6',
-    type: 'out',
-    quantity: 4,
-    reason: 'department_transfer',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-    item_name: 'Sutures résorbables 3/0',
-    user_name: 'A. Koné',
-  },
-  {
-    id: 'm4',
-    item_id: 'i2',
-    type: 'in',
-    quantity: 30,
-    reason: 'delivery',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
-    item_name: 'Gants chirurgicaux stériles',
-    user_name: 'S. Diomandé',
-  },
-  {
-    id: 'm5',
-    item_id: 'i8',
-    type: 'out',
-    quantity: 6,
-    reason: 'patient_dispense',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-    item_name: 'Ceftriaxone 1 g injectable',
-    user_name: 'M. Traoré',
-  },
-];
-const orderSeed: Order[] = [
-  {
-    id: 'o1',
-    reference: 'CMD-2026-086',
-    supplier: 'Laborex Côte d’Ivoire',
-    items: 1,
-    amount: 55500,
-    status: 'En transit',
-    date: dateIn(-2),
-    lines: [{ item_id: 'i1', description: 'Amoxicilline 500 mg', quantity: 30, unit_price: 1850 }],
-  },
-  {
-    id: 'o2',
-    reference: 'CMD-2026-085',
-    supplier: 'Copharmed',
-    items: 1,
-    amount: 12500,
-    status: 'Reçue',
-    date: dateIn(-5),
-    lines: [
-      { item_id: 'i2', description: 'Gants chirurgicaux stériles', quantity: 50, unit_price: 250 },
-    ],
-  },
-  {
-    id: 'o3',
-    reference: 'CMD-2026-084',
-    supplier: 'Medline Afrique',
-    items: 1,
-    amount: 62400,
-    status: 'Reçue',
-    date: dateIn(-12),
-    lines: [
-      {
-        item_id: 'i3',
-        description: 'Seringues 5 ml (boîte de 100)',
-        quantity: 12,
-        unit_price: 5200,
-      },
-    ],
-  },
-];
-const categoryLabel: Record<string, string> = {
-  medication: 'Médicaments',
-  ppe: 'EPI',
-  surgical: 'Chirurgie',
-  other: 'Autres',
-};
-const money = (n: number) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'XOF',
-    maximumFractionDigits: 0,
-  }).format(n);
-const shortDate = (s: string | null) =>
-  s
-    ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
-    : '—';
-const ago = (s: string) => {
-  const h = Math.max(1, Math.floor((Date.now() - new Date(s).getTime()) / 3600000));
-  return h < 24 ? `Il y a ${h} h` : `Il y a ${Math.floor(h / 24)} j`;
-};
-
 export default function Home() {
-  const [items, setItems] = useState<Item[]>(() => (supabase ? [] : makeItems()));
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => (supabase ? [] : suppliersSeed));
-  const [movements, setMovements] = useState<Movement[]>(() => (supabase ? [] : initialMovements));
-  const [orders, setOrders] = useState<Order[]>(() => (supabase ? [] : orderSeed));
+  const {
+    items,
+    setItems,
+    suppliers,
+    setSuppliers,
+    movements,
+    setMovements,
+    orders,
+    setOrders,
+    expenses,
+    profileCounts,
+    role,
+    setRole,
+    name,
+    setName,
+    email,
+    setEmail,
+    authed,
+    setAuthed,
+    booting,
+    dataError,
+  } = useCenterData();
   const [page, setPage] = useState('dashboard');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -372,295 +71,21 @@ export default function Home() {
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [toast, setToast] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [role, setRole] = useState('pharmacist');
-  const [name, setName] = useState('Aïcha Koné');
-  const [email, setEmail] = useState('');
-  const [authed, setAuthed] = useState(false);
-  const [booting, setBooting] = useState(true);
-  const [dataError, setDataError] = useState('');
   const [busy, setBusy] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [profileCounts, setProfileCounts] = useState({ admin: 0, pharmacist: 0, nurse: 0 });
-  const [expenses, setExpenses] = useState<{ label: string; value: number }[]>(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const d = new Date();
-      d.setDate(1);
-      d.setMonth(d.getMonth() - 5 + i);
-      return { label: d.toLocaleDateString('fr-FR', { month: 'short' }), value: 0 };
-    }),
-  );
   const [moveType, setMoveType] = useState<'in' | 'out'>('out');
   const [moveReason, setMoveReason] = useState('patient_dispense');
   const [moveItemId, setMoveItemId] = useState('');
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        if (supabase) {
-          const {
-            data: { session: initialSession },
-            error: sessionError,
-          } = await supabase.auth.getSession();
-          if (sessionError) throw sessionError;
-          let session = initialSession;
-          if (!session) {
-            const { data: refreshData, error } = await supabase.auth.refreshSession();
-            if (error) throw error;
-            session = refreshData.session;
-          }
-          if (!session) {
-            window.location.replace('/login?error=session');
-            return;
-          }
-          setAuthed(true);
-          setEmail(session.user.email || '');
-          const { data: p, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          if (profileError)
-            throw new Error(`Chargement du profil impossible : ${profileError.message}`);
-          if (p?.access_status !== 'approved') {
-            window.location.replace('/pending');
-            return;
-          }
-          if (!p) throw new Error('Profil utilisateur introuvable.');
-          setName(p.full_name || session.user.email || 'Utilisateur');
-          setRole(p.role || 'nurse');
-          const nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
-          let nextExpenses = expenses;
-          if (p.role === 'admin') {
-            const firstMonth = new Date();
-            firstMonth.setDate(1);
-            firstMonth.setMonth(firstMonth.getMonth() - 5);
-            firstMonth.setHours(0, 0, 0, 0);
-            const [
-              { data: profiles, error: profilesError },
-              { data: outRows, error: outRowsError },
-            ] = await Promise.all([
-              supabase.from('profiles').select('role'),
-              supabase
-                .from('stock_movements')
-                .select('quantity,unit_price,created_at')
-                .eq('type', 'out')
-                .gte('created_at', firstMonth.toISOString()),
-            ]);
-            if (profilesError)
-              throw new Error(`Chargement des profils impossible : ${profilesError.message}`);
-            if (outRowsError)
-              throw new Error(`Chargement des dépenses impossible : ${outRowsError.message}`);
-            profiles?.forEach((u: { role: string }) => {
-              if (u.role in nextProfileCounts)
-                nextProfileCounts[u.role as keyof typeof nextProfileCounts]++;
-            });
-            const series = Array.from({ length: 6 }, (_, i) => {
-              const d = new Date();
-              d.setDate(1);
-              d.setMonth(d.getMonth() - 5 + i);
-              return {
-                key: `${d.getFullYear()}-${d.getMonth()}`,
-                label: d.toLocaleDateString('fr-FR', { month: 'short' }),
-                value: 0,
-              };
-            });
-            outRows?.forEach(
-              (r: { created_at: string; quantity: number; unit_price: number | null }) => {
-                const d = new Date(r.created_at);
-                const entry = series.find((s) => s.key === `${d.getFullYear()}-${d.getMonth()}`);
-                if (entry) entry.value += Number(r.quantity) * Number(r.unit_price || 0);
-              },
-            );
-            nextExpenses = series.map(({ label, value }) => ({ label, value }));
-          }
-          const [
-            { data: it, error: itemsError },
-            { data: sp, error: suppliersError },
-            { data: mv, error: movementsError },
-            { data: od, error: ordersError },
-          ] = await Promise.all([
-            supabase
-              .from('inventory_items')
-              .select('*, suppliers(name)')
-              .is('archived_at', null)
-              .order('created_at', { ascending: false }),
-            supabase.from('suppliers').select('*').order('name'),
-            supabase
-              .from('stock_movements')
-              .select('*, inventory_items(name), profiles(full_name)')
-              .order('created_at', { ascending: false })
-              .limit(200),
-            supabase
-              .from('purchase_orders')
-              .select('*, suppliers(name), purchase_order_items(count)')
-              .order('created_at', { ascending: false }),
-          ]);
-          if (itemsError)
-            throw new Error(`Chargement de l’inventaire impossible : ${itemsError.message}`);
-          if (suppliersError)
-            throw new Error(`Chargement des fournisseurs impossible : ${suppliersError.message}`);
-          if (movementsError)
-            throw new Error(`Chargement des mouvements impossible : ${movementsError.message}`);
-          if (ordersError)
-            throw new Error(`Chargement des commandes impossible : ${ordersError.message}`);
-          if (!active) return;
-          setProfileCounts(nextProfileCounts);
-          setExpenses(nextExpenses);
-          setItems(
-            (it || []).map((x: Item & { suppliers?: { name: string | null } | null }) => ({
-              ...x,
-              supplier_name: x.suppliers?.name ?? undefined,
-            })),
-          );
-          setSuppliers(sp || []);
-          setMovements(
-            (mv || []).map(
-              (
-                x: Movement & {
-                  inventory_items?: { name: string } | null;
-                  profiles?: { full_name: string } | null;
-                },
-              ) => ({
-                ...x,
-                item_name: x.inventory_items?.name,
-                user_name: x.profiles?.full_name,
-              }),
-            ),
-          );
-          setOrders(
-            (od || []).map(
-              (x: {
-                id: string;
-                reference: string;
-                suppliers?: { name: string } | null;
-                purchase_order_items?: { count: number }[];
-                total_amount: number;
-                status: string;
-                created_at: string;
-              }) => ({
-                id: x.id,
-                reference: x.reference,
-                supplier: x.suppliers?.name || 'Fournisseur',
-                items: x.purchase_order_items?.[0]?.count || 0,
-                amount: Number(x.total_amount),
-                status:
-                  x.status === 'in_transit'
-                    ? 'En transit'
-                    : x.status === 'received'
-                      ? 'Reçue'
-                      : x.status,
-                date: x.created_at.slice(0, 10),
-              }),
-            ),
-          );
-        } else {
-          const raw = localStorage.getItem('medistock-demo');
-          if (raw) {
-            const saved: unknown = JSON.parse(raw);
-            if (typeof saved !== 'object' || saved === null || Array.isArray(saved))
-              throw new Error('Format du stockage de démonstration invalide.');
-            const data = saved as Partial<{
-              items: Item[];
-              suppliers: Supplier[];
-              movements: Movement[];
-              orders: Order[];
-            }>;
-            if (
-              !Array.isArray(data.items) ||
-              !Array.isArray(data.suppliers) ||
-              !Array.isArray(data.movements) ||
-              !Array.isArray(data.orders)
-            )
-              throw new Error('Données de démonstration incomplètes.');
-            setItems(data.items);
-            setSuppliers(data.suppliers);
-            setMovements(data.movements);
-            setOrders(data.orders);
-          }
-        }
-      } catch (error) {
-        if (!active) return;
-        setItems([]);
-        setSuppliers([]);
-        setMovements([]);
-        setOrders([]);
-        setDataError(formatError(error));
-      } finally {
-        if (active) setBooting(false);
-      }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, []);
-  useEffect(() => {
-    if (supabase || booting || dataError) return;
-    try {
-      localStorage.setItem(
-        'medistock-demo',
-        JSON.stringify({ items, suppliers, movements, orders }),
-      );
-    } catch (error) {
-      queueMicrotask(() =>
-        setDataError('Enregistrement de la démo impossible : ' + formatError(error)),
-      );
-    }
-  }, [items, suppliers, movements, orders, booting, dataError]);
-  useEffect(() => {
-    const client = supabase;
-    if (!client || booting || dataError) return;
-    let active = true;
-    const loadOrderLines = async () => {
-      const { data, error } = await client
-        .from('purchase_order_items')
-        .select('order_id,item_id,description,quantity,unit_price');
-      if (error) throw new Error('Chargement des lignes de commande impossible');
-      if (!active) return;
-      const linesByOrder = new Map<string, OrderLine[]>();
-      (data || []).forEach((line) => {
-        const lines = linesByOrder.get(line.order_id) || [];
-        lines.push({
-          item_id: line.item_id,
-          description: line.description,
-          quantity: line.quantity,
-          unit_price: Number(line.unit_price),
-        });
-        linesByOrder.set(line.order_id, lines);
-      });
-      setOrders((current) =>
-        current.map((order) => ({ ...order, lines: linesByOrder.get(order.id) || [] })),
-      );
-    };
-    void loadOrderLines().catch((error) => {
-      if (active)
-        setDataError(
-          error instanceof Error
-            ? formatError(error)
-            : 'Chargement des lignes de commande impossible.',
-        );
-    });
-    return () => {
-      active = false;
-    };
-  }, [booting, dataError]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(''), 3000);
     return () => clearTimeout(t);
   }, [toast]);
   const notify = (s: string) => setToast(s);
-  const lowItems = items.filter((i) => i.quantity <= i.min_threshold);
-  const [today] = useState(() => new Date(new Date().toDateString()));
-  const expiring = items
-    .filter(
-      (i) =>
-        i.expiration_date &&
-        new Date(i.expiration_date + 'T12:00:00') >= today &&
-        (new Date(i.expiration_date + 'T12:00:00').getTime() - today.getTime()) / 86400000 <= 90,
-    )
-    .sort((a, b) => String(a.expiration_date).localeCompare(String(b.expiration_date)));
-  const totalValue = items.reduce((a, i) => a + i.quantity * i.price, 0);
+  const lowItems = useMemo(
+    () => items.filter((i) => i.quantity <= i.min_threshold),
+    [items],
+  );
   const filtered = useMemo(
     () =>
       items.filter(
@@ -772,59 +197,39 @@ export default function Home() {
     try {
       const f = new FormData(e.currentTarget);
       const supplier = suppliers.find((s) => s.id === String(f.get('supplier_id')));
-      const payload: Item = {
-        id: editItem?.id || uid(),
-        name: String(f.get('name')),
-        category: String(f.get('category')) as Item['category'],
-        sku_batch: String(f.get('sku_batch')),
-        expiration_date: String(f.get('expiration_date')) || null,
-        supplier_id: String(f.get('supplier_id')) || null,
-        quantity: Number(f.get('quantity')),
-        min_threshold: Number(f.get('min_threshold')),
-        price: Number(f.get('price')),
-        created_at: editItem?.created_at || new Date().toISOString(),
-        supplier_name: supplier?.name,
-      };
       if (supabase) {
         const row = {
-          name: payload.name,
-          category: payload.category,
-          sku_batch: payload.sku_batch,
-          expiration_date: payload.expiration_date,
-          supplier_id: payload.supplier_id,
-          quantity: payload.quantity,
-          min_threshold: payload.min_threshold,
-          price: payload.price,
+          name: String(f.get('name')),
+          category: String(f.get('category')) as Item['category'],
+          sku_batch: String(f.get('sku_batch')),
+          expiration_date: String(f.get('expiration_date')) || null,
+          supplier_id: String(f.get('supplier_id')) || null,
+          quantity: Number(f.get('quantity')),
+          min_threshold: Number(f.get('min_threshold')),
+          price: Number(f.get('price')),
         };
-        if (editItem) {
-          const { data, error } = await supabase
-            .from('inventory_items')
-            .update(row)
-            .eq('id', editItem.id)
-            .select('*,suppliers(name)')
-            .single();
-          if (error) {
-            notify(formatError(error));
-            return;
-          }
-          setItems((prev) =>
-            prev.map((x) =>
-              x.id === data.id ? { ...data, supplier_name: data.suppliers?.name } : x,
-            ),
-          );
-        } else {
-          const { data, error } = await supabase
-            .from('inventory_items')
-            .insert(row)
-            .select('*,suppliers(name)')
-            .single();
-          if (error) {
-            notify(formatError(error));
-            return;
-          }
-          setItems((prev) => [{ ...data, supplier_name: data.suppliers?.name }, ...prev]);
+        const { item, error } = await upsertItem(supabase, row, editItem?.id);
+        if (error || !item) {
+          notify(formatError(error));
+          return;
         }
+        setItems((prev) =>
+          editItem ? prev.map((x) => (x.id === item.id ? item : x)) : [item, ...prev],
+        );
       } else {
+        const payload: Item = {
+          id: editItem?.id || uid(),
+          name: String(f.get('name')),
+          category: String(f.get('category')) as Item['category'],
+          sku_batch: String(f.get('sku_batch')),
+          expiration_date: String(f.get('expiration_date')) || null,
+          supplier_id: String(f.get('supplier_id')) || null,
+          quantity: Number(f.get('quantity')),
+          min_threshold: Number(f.get('min_threshold')),
+          price: Number(f.get('price')),
+          created_at: editItem?.created_at || new Date().toISOString(),
+          supplier_name: supplier?.name,
+        };
         setItems((prev) =>
           editItem ? prev.map((x) => (x.id === editItem.id ? payload : x)) : [payload, ...prev],
         );
@@ -842,10 +247,7 @@ export default function Home() {
     setBusy(true);
     try {
       if (supabase) {
-        const { error } = await supabase
-          .from('inventory_items')
-          .update({ archived_at: new Date().toISOString() })
-          .eq('id', id);
+        const { error } = await archiveItem(supabase, id);
         if (error) {
           notify('Archivage impossible : ' + formatError(error));
           return;
@@ -887,11 +289,11 @@ export default function Home() {
       setItems((xs) => xs.map((x) => (x.id === iid ? { ...x, quantity: next } : x)));
       setMovements((xs) => [moved, ...xs]);
       if (supabase) {
-        const { data: m, error } = await supabase.rpc('record_stock_movement', {
-          p_item_id: iid,
-          p_type: typ,
-          p_quantity: qty,
-          p_reason: reason,
+        const { movement: m, error } = await recordMovement(supabase, {
+          itemId: iid,
+          type: typ,
+          quantity: qty,
+          reason,
         });
         if (error) {
           setItems((xs) => xs.map((x) => (x.id === iid ? { ...x, quantity: item.quantity } : x)));
@@ -918,26 +320,29 @@ export default function Home() {
     setBusy(true);
     try {
       const f = new FormData(e.currentTarget);
-      const s = {
-        id: uid(),
-        name: String(f.get('name')),
-        contact_name: String(f.get('contact_name')),
-        email: String(f.get('email')),
-        phone: String(f.get('phone')),
-      };
       if (supabase) {
-        const { data, error } = await supabase
-          .from('suppliers')
-          .insert({ name: s.name, contact_name: s.contact_name, email: s.email, phone: s.phone })
-          .select()
-          .single();
-        if (error) {
+        const { supplier, error } = await createSupplier(supabase, {
+          name: String(f.get('name')),
+          contact_name: String(f.get('contact_name')),
+          email: String(f.get('email')),
+          phone: String(f.get('phone')),
+        });
+        if (error || !supplier) {
           notify(formatError(error));
           return;
         }
-        setSuppliers((x) => [data, ...x]);
+        setSuppliers((x) => [supplier, ...x]);
       } else {
-        setSuppliers((x) => [s, ...x]);
+        setSuppliers((x) => [
+          {
+            id: uid(),
+            name: String(f.get('name')),
+            contact_name: String(f.get('contact_name')),
+            email: String(f.get('email')),
+            phone: String(f.get('phone')),
+          },
+          ...x,
+        ]);
       }
       setModal('');
       notify('Fournisseur ajouté au répertoire');
@@ -945,6 +350,21 @@ export default function Home() {
       setBusy(false);
     }
   };
+  const buildOrder = (draft: PurchaseOrderDraft, id: string, amount: number): Order => ({
+    id,
+    reference: draft.reference,
+    supplier: suppliers.find((s) => s.id === draft.supplier_id)!.name,
+    items: draft.items.length,
+    amount,
+    status: 'En transit',
+    date: new Date().toISOString().slice(0, 10),
+    lines: draft.items.map((line) => ({
+      item_id: line.item_id,
+      description: items.find((item) => item.id === line.item_id)?.name || '',
+      quantity: line.quantity,
+      unit_price: line.unit_price,
+    })),
+  });
   const saveOrder = async (draft: PurchaseOrderDraft) => {
     if (busy) return;
     setBusy(true);
@@ -963,8 +383,7 @@ export default function Home() {
         notify('Vérifiez les lignes de commande.');
         return;
       }
-      const supplier = suppliers.find((s) => s.id === draft.supplier_id);
-      if (!supplier) {
+      if (!suppliers.find((s) => s.id === draft.supplier_id)) {
         notify('Sélectionnez un fournisseur valide.');
         return;
       }
@@ -973,53 +392,18 @@ export default function Home() {
         0,
       );
       if (supabase) {
-        const { data: createdId, error } = await supabase.rpc('create_purchase_order', {
-          p_reference: draft.reference,
-          p_supplier_id: draft.supplier_id,
-          p_expected_date: draft.expected_date || null,
-          p_items: draft.items,
-        });
+        const { id, error } = await createOrder(supabase, draft);
         if (error) {
           notify('Erreur : ' + formatError(error));
           return;
         }
-        if (typeof createdId !== 'string') {
+        if (!id) {
           notify('La base n’a pas confirmé la création de la commande.');
           return;
         }
-        const order: Order = {
-          id: createdId,
-          reference: draft.reference,
-          supplier: supplier.name,
-          items: draft.items.length,
-          amount,
-          status: 'En transit',
-          date: new Date().toISOString().slice(0, 10),
-          lines: draft.items.map((line) => ({
-            item_id: line.item_id,
-            description: items.find((item) => item.id === line.item_id)?.name || '',
-            quantity: line.quantity,
-            unit_price: line.unit_price,
-          })),
-        };
-        setOrders((current) => [order, ...current]);
+        setOrders((current) => [buildOrder(draft, id, amount), ...current]);
       } else {
-        const order: Order = {
-          id: uid(),
-          reference: draft.reference,
-          supplier: supplier.name,
-          items: draft.items.length,
-          amount,
-          status: 'En transit',
-          date: new Date().toISOString().slice(0, 10),
-          lines: draft.items.map((line) => ({
-            item_id: line.item_id,
-            description: items.find((item) => item.id === line.item_id)?.name || '',
-            quantity: line.quantity,
-            unit_price: line.unit_price,
-          })),
-        };
-        setOrders((current) => [order, ...current]);
+        setOrders((current) => [buildOrder(draft, uid(), amount), ...current]);
       }
       setModal('');
       notify('Commande enregistrée');
@@ -1036,36 +420,9 @@ export default function Home() {
         return;
       }
       if (supabase) {
-        const { data, error } = await supabase.rpc('receive_purchase_order', { p_order_id: o.id });
-        if (error) {
+        const { received, error } = await receiveOrderRpc(supabase, o.id, o.lines.length);
+        if (error || !received) {
           notify('Réception refusée : ' + formatError(error));
-          return;
-        }
-        if (
-          typeof data !== 'object' ||
-          data === null ||
-          !('received_items' in data) ||
-          !Array.isArray(data.received_items)
-        ) {
-          notify('Réception non confirmée par la base. Rechargez les données avant de réessayer.');
-          return;
-        }
-        const received = data.received_items as Array<{
-          item_id: string;
-          quantity: number;
-          movement: Movement;
-        }>;
-        if (
-          received.length !== o.lines.length ||
-          received.some(
-            (line) =>
-              typeof line.item_id !== 'string' ||
-              typeof line.quantity !== 'number' ||
-              typeof line.movement !== 'object' ||
-              line.movement === null,
-          )
-        ) {
-          notify('Réponse de réception invalide. Rechargez les données avant de réessayer.');
           return;
         }
         setItems((current) =>
@@ -1132,208 +489,6 @@ export default function Home() {
     setQuery('');
     setFilter('all');
   };
-  const title: Record<string, string> = {
-    dashboard: 'Vue d’ensemble',
-    finances: 'Finances',
-    inventory: 'Inventaire',
-    movements: 'Mouvements de stock',
-    suppliers: 'Fournisseurs',
-    orders: 'Commandes',
-    team: 'Équipe',
-    settings: 'Paramètres',
-  };
-  const catIcon = (c: string) =>
-    c === 'medication' ? (
-      <Pill size={15} />
-    ) : c === 'ppe' ? (
-      <ShieldCheck size={15} />
-    ) : c === 'surgical' ? (
-      <Stethoscope size={15} />
-    ) : (
-      <Package size={15} />
-    );
-  const stockBadge = (i: Item) =>
-    i.quantity <= i.min_threshold * 0.5
-      ? ['Critique', 'red']
-      : i.quantity <= i.min_threshold
-        ? ['Stock bas', 'yellow']
-        : ['En stock', 'green'];
-  const tableInventory = () => (
-    <div className="panel content-table">
-      <div className="panel-head">
-        <div>
-          <div className="panel-title">
-            Articles en stock{' '}
-            <span style={{ color: '#95a3a5', fontWeight: 500 }}>({filtered.length})</span>
-          </div>
-          <div className="panel-sub">Consultez et gérez les fournitures de votre centre</div>
-        </div>
-        {role !== 'nurse' && (
-          <button
-            className="btn"
-            onClick={() => {
-              setEditItem(null);
-              setModal('item');
-            }}
-          >
-            <Plus size={14} /> Nouvel article
-          </button>
-        )}
-      </div>
-      {filtered.length ? (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>ARTICLE</th>
-                <th>CATÉGORIE</th>
-                <th>LOT / SÉRIE</th>
-                <th>EXPIRATION</th>
-                <th>QUANTITÉ</th>
-                <th>STATUT</th>
-                <th>FOURNISSEUR</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((i) => (
-                <tr key={i.id}>
-                  <td>
-                    <div className="item-name">
-                      <div className={'item-thumb ' + i.category}>{catIcon(i.category)}</div>
-                      <div>
-                        <strong>{i.name}</strong>
-                        {role !== 'nurse' && (
-                          <div style={{ fontSize: 9, color: '#9aa6a7', marginTop: 3 }}>
-                            {money(i.price)} / unité
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>{categoryLabel[i.category]}</td>
-                  <td>{i.sku_batch}</td>
-                  <td>{shortDate(i.expiration_date)}</td>
-                  <td>
-                    <div className="stock-cell">
-                      <b style={{ color: '#304750' }}>{i.quantity}</b>
-                      <div className="stock-track">
-                        <div
-                          className={
-                            'stock-fill ' +
-                            (i.quantity <= i.min_threshold * 0.5
-                              ? 'critical'
-                              : i.quantity <= i.min_threshold
-                                ? 'low'
-                                : '')
-                          }
-                          style={{
-                            width: `${Math.min(100, (i.quantity / Math.max(1, i.min_threshold * 2)) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                      <span style={{ fontSize: 9, color: '#9aa6a7' }}>min. {i.min_threshold}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={'pill ' + stockBadge(i)[1]}>{stockBadge(i)[0]}</span>
-                  </td>
-                  <td>
-                    {i.supplier_name || suppliers.find((s) => s.id === i.supplier_id)?.name || '—'}
-                  </td>
-                  <td>
-                    {role !== 'nurse' && (
-                      <button
-                        className="icon-btn"
-                        style={{ width: 28, height: 28 }}
-                        onClick={() => {
-                          setEditItem(i);
-                          setModal('item');
-                        }}
-                        aria-label="Modifier"
-                      >
-                        <MoreHorizontal size={15} />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="empty">
-          <div className="empty-icon">
-            <Search size={20} />
-          </div>
-          <b>Aucun article trouvé</b>
-          <span>Essayez une autre recherche ou modifiez les filtres.</span>
-        </div>
-      )}
-    </div>
-  );
-  const movementTable = () => (
-    <div className="panel content-table">
-      <div className="panel-head">
-        <div>
-          <div className="panel-title">Historique des mouvements</div>
-          <div className="panel-sub">Entrées et sorties enregistrées dans le centre</div>
-        </div>
-        <button className="btn" onClick={() => setModal('movement')}>
-          <Plus size={14} /> Nouveau mouvement
-        </button>
-      </div>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ARTICLE</th>
-              <th>TYPE</th>
-              <th>QUANTITÉ</th>
-              <th>MOTIF</th>
-              <th>UTILISATEUR</th>
-              <th>DATE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {movements.map((m) => (
-              <tr key={m.id}>
-                <td>
-                  <strong>
-                    {m.item_name || items.find((i) => i.id === m.item_id)?.name || 'Article'}
-                  </strong>
-                </td>
-                <td>
-                  <span className={'pill ' + (m.type === 'in' ? 'green' : 'yellow')}>
-                    {m.type === 'in' ? 'Entrée' : 'Sortie'}
-                  </span>
-                </td>
-                <td>
-                  <b style={{ color: m.type === 'in' ? '#159b78' : '#d17c63' }}>
-                    {m.type === 'in' ? '+' : '−'}
-                    {m.quantity}
-                  </b>
-                </td>
-                <td>
-                  {(
-                    {
-                      delivery: 'Livraison',
-                      patient_dispense: 'Dispensation patient',
-                      expired_disposal: 'Destruction — péremption',
-                      department_transfer: 'Transfert de service',
-                    } as Record<string, string>
-                  )[m.reason] || m.reason}
-                </td>
-                <td>{m.user_name || name}</td>
-                <td>{ago(m.created_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-  const inventoryValue = money(totalValue);
   const openMove = (itemId: string, type: 'in' | 'out', reason: string) => {
     setMoveItemId(itemId || items[0]?.id || '');
     setMoveType(type);
@@ -1367,7 +522,7 @@ export default function Home() {
       .map((r) => r.map((c) => '"' + String(c).replaceAll('"', '""') + '"').join(';'))
       .join('\n');
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
     a.download = `medistock-rapport-${dateIn(0)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
@@ -1392,830 +547,164 @@ export default function Home() {
         </div>
       </main>
     );
+  const dashboardProps = {
+    role,
+    name,
+    items,
+    movements,
+    profileCounts,
+    expenses,
+    onMove: openMove,
+    onNavigate: switchPage,
+    onExport: exportReport,
+  };
   return (
-    <div className="app-shell">
-      <aside className={'sidebar ' + (mobileOpen ? 'open' : '')}>
-        <div className="brand">
-          <div className="brand-mark">
-            <Plus size={22} strokeWidth={3} />
-          </div>
-          <div>
-            MediStock<small>CLINIQUE DU LAGON</small>
-          </div>
-        </div>
-        {nav.map((group) => (
-          <div key={group.title}>
-            <div className="nav-label">{group.title}</div>
-            {group.links.map(([id, label, Icon]) => (
-              <button
-                key={id}
-                className={'nav-item ' + (page === id ? 'active' : '')}
-                onClick={() => switchPage(id)}
-              >
-                <Icon size={17} />
-                {label}
-                {id === 'inventory' && lowItems.length > 0 && (
-                  <span className="nav-badge">{lowItems.length}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        ))}
-        <div className="sidebar-bottom">
-          <div className="clinic-card">
-            <div className="clinic-icon">
-              <Hospital size={17} />
-            </div>
-            <div>
-              <b>Clinique du Lagon</b>
-              <span>Abidjan, Côte d’Ivoire</span>
-            </div>
-            <ChevronDown size={14} color="#9cb0b3" style={{ marginLeft: 'auto' }} />
-          </div>
-          <div className="profile">
-            <div className="avatar">
-              {name
-                .split(' ')
-                .map((x) => x[0])
-                .slice(0, 2)
-                .join('')
-                .toUpperCase()}
-            </div>
-            <div>
-              <b>{name}</b>
-              <small>
-                {role === 'admin'
-                  ? 'Administrateur'
-                  : role === 'pharmacist'
-                    ? 'Pharmacien'
-                    : 'Infirmier'}
-              </small>
-            </div>
-            <button
-              className="profile-menu"
-              aria-label="Déconnexion"
-              onClick={logout}
-              style={{ background: 'none', border: 0 }}
-            >
-              <LogOut size={15} />
-            </button>
-          </div>
-        </div>
-      </aside>
-      <div className="main">
-        <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-            <button className="icon-btn mobile-menu" onClick={() => setMobileOpen(!mobileOpen)}>
-              <Menu size={17} />
-            </button>
-            <div className="breadcrumb">
-              Centre de santé&nbsp; / &nbsp;<b>{title[page]}</b>
-            </div>
-          </div>
-          <div className="top-actions">
-            <div className="online">
-              <i />
-              {supabase ? (authed ? 'Connecté' : 'Authentification requise') : 'Mode démonstration'}
-            </div>
-            <button
-              className="icon-btn"
-              onClick={() =>
-                notify(
-                  lowItems.length
-                    ? `${lowItems.length} alerte(s) de stock bas`
-                    : 'Aucune nouvelle alerte',
-                )
-              }
-            >
-              <Bell size={16} />
-              {lowItems.length > 0 && <span className="dot" />}
-            </button>
-            {!authed && (
-              <button
-                className="btn secondary"
-                style={{ padding: '8px 11px' }}
-                onClick={() => (supabase ? window.location.assign('/login') : setModal('login'))}
-              >
-                Connexion
-              </button>
-            )}
-          </div>
-        </header>
-        <main className="content">
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">CENTRE DE SANTÉ · ABIDJAN</div>
-              <h1>
-                {page === 'dashboard' ? 'Bonjour, ' + name.split(' ')[0] + ' 👋' : title[page]}
-              </h1>
-              <p>
-                {page === 'dashboard'
-                  ? 'Voici l’état de vos stocks et les points à surveiller aujourd’hui.'
-                  : page === 'inventory'
-                    ? 'Gérez les médicaments, consommables et équipements du centre.'
-                    : page === 'movements'
-                      ? 'Suivez chaque entrée et sortie de vos stocks.'
-                      : page === 'suppliers'
-                        ? 'Vos partenaires d’approvisionnement en un seul endroit.'
-                        : page === 'orders'
-                          ? 'Suivez les commandes et livraisons en cours.'
-                          : page === 'finances'
-                            ? 'Supervisez la valeur du stock et les dépenses mensuelles.'
-                            : 'Gérez les accès et préférences du centre.'}
-              </p>
-            </div>
-            {page === 'dashboard' ? (
-              <button className="date-chip">
-                <CalendarDays size={14} />
-                {today.toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </button>
-            ) : null}
-          </div>
-          {page === 'dashboard' &&
-            (role === 'nurse' ? (
-              <NurseDashboard
-                role={role}
-                name={name}
-                items={items}
-                movements={movements}
-                profileCounts={profileCounts}
-                expenses={expenses}
-                onMove={openMove}
-                onNavigate={switchPage}
-                onExport={exportReport}
-              />
-            ) : role === 'pharmacist' ? (
-              <PharmacistDashboard
-                role={role}
-                name={name}
-                items={items}
-                movements={movements}
-                profileCounts={profileCounts}
-                expenses={expenses}
-                onMove={openMove}
-                onNavigate={switchPage}
-                onExport={exportReport}
-              />
-            ) : (
-              <AdminDashboard
-                role={role}
-                name={name}
-                items={items}
-                movements={movements}
-                profileCounts={profileCounts}
-                expenses={expenses}
-                onMove={openMove}
-                onNavigate={switchPage}
-                onExport={exportReport}
-              />
-            ))}
-          {page === 'finances' && role === 'admin' && (
-            <AdminDashboard
-              role={role}
-              name={name}
-              items={items}
-              movements={movements}
-              profileCounts={profileCounts}
-              expenses={expenses}
-              onMove={openMove}
-              onNavigate={switchPage}
-              onExport={exportReport}
+    <DashboardShell
+      nav={nav}
+      page={page}
+      onNavigate={switchPage}
+      lowCount={lowItems.length}
+      name={name}
+      role={role}
+      authed={authed}
+      isLive={!!supabase}
+      mobileOpen={mobileOpen}
+      onToggleMobile={() => setMobileOpen(!mobileOpen)}
+      onBell={() =>
+        notify(
+          lowItems.length ? `${lowItems.length} alerte(s) de stock bas` : 'Aucune nouvelle alerte',
+        )
+      }
+      onLoginClick={() => (supabase ? window.location.assign('/login') : setModal('login'))}
+      onLogout={logout}
+      overlays={
+        <>
+          {modal === 'item' && (
+            <ItemFormModal
+              editItem={editItem}
+              suppliers={suppliers}
+              busy={busy}
+              onSubmit={saveItem}
+              onClose={() => setModal('')}
+              onRemove={removeItem}
             />
           )}
-          {page === 'inventory' && (
-            <>
-              <div className="page-toolbar">
-                <div className="search">
-                  <Search size={15} />
-                  <input
-                    placeholder="Rechercher un article, un lot…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <select
-                  className="select"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                >
-                  <option value="all">Toutes les catégories</option>
-                  <option value="medication">Médicaments</option>
-                  <option value="ppe">EPI</option>
-                  <option value="surgical">Chirurgie</option>
-                  <option value="other">Autres</option>
-                </select>
-                {role === 'admin' && (
-                  <button className="btn secondary" onClick={exportReport}>
-                    <Download size={14} /> Exporter
-                  </button>
-                )}
-              </div>
-              {tableInventory()}
-            </>
+          {modal === 'movement' && (
+            <MovementFormModal
+              items={items}
+              role={role}
+              moveItemId={moveItemId}
+              moveType={moveType}
+              moveReason={moveReason}
+              busy={busy}
+              onSubmit={stockMove}
+              onClose={() => setModal('')}
+            />
           )}
-          {page === 'movements' && <>{movementTable()}</>}
-          {page === 'suppliers' && (
-            <>
-              <div className="page-toolbar">
-                <div className="search">
-                  <Search size={15} />
-                  <input
-                    placeholder="Rechercher un fournisseur…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <button className="btn" onClick={() => setModal('supplier')}>
-                  <Plus size={14} /> Ajouter un fournisseur
-                </button>
-              </div>
-              <div className="panel">
-                <div className="panel-head">
-                  <div>
-                    <div className="panel-title">Répertoire fournisseurs</div>
-                    <div className="panel-sub">{suppliers.length} partenaires référencés</div>
-                  </div>
-                </div>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>FOURNISSEUR</th>
-                        <th>CONTACT</th>
-                        <th>EMAIL</th>
-                        <th>TÉLÉPHONE</th>
-                        <th>ARTICLES</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {suppliers
-                        .filter((s) =>
-                          (s.name + s.contact_name + s.email)
-                            .toLowerCase()
-                            .includes(query.toLowerCase()),
-                        )
-                        .map((s) => (
-                          <tr key={s.id}>
-                            <td>
-                              <div className="item-name">
-                                <div className="supplier-avatar">
-                                  {s.name
-                                    .split(' ')
-                                    .slice(0, 2)
-                                    .map((x) => x[0])
-                                    .join('')
-                                    .toUpperCase()}
-                                </div>
-                                <strong>{s.name}</strong>
-                              </div>
-                            </td>
-                            <td>{s.contact_name}</td>
-                            <td>{s.email}</td>
-                            <td>{s.phone}</td>
-                            <td>
-                              <span className="pill green">
-                                {items.filter((i) => i.supplier_id === s.id).length} articles
-                              </span>
-                            </td>
-                            <td>
-                              <button
-                                className="icon-btn"
-                                style={{ width: 29, height: 29 }}
-                                onClick={() => {
-                                  navigator.clipboard?.writeText(s.email);
-                                  notify('Adresse e-mail copiée');
-                                }}
-                              >
-                                <ArrowRight size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
+          {modal === 'supplier' && (
+            <SupplierFormModal busy={busy} onSubmit={saveSupplier} onClose={() => setModal('')} />
           )}
-          {page === 'orders' && (
-            <>
-              <div className="page-toolbar">
-                <div className="search">
-                  <Search size={15} />
-                  <input
-                    placeholder="Rechercher une commande…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <button
-                  className="btn"
-                  onClick={() => setModal('order')}
-                  disabled={!suppliers.length || !items.length}
-                >
-                  <Plus size={14} /> Nouvelle commande
-                </button>
-              </div>
-              <div className="panel">
-                <div className="panel-head">
-                  <div>
-                    <div className="panel-title">Commandes d’approvisionnement</div>
-                    <div className="panel-sub">Suivi des livraisons entrantes et reçues</div>
-                  </div>
-                </div>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>RÉFÉRENCE</th>
-                        <th>FOURNISSEUR</th>
-                        <th>ARTICLES</th>
-                        <th>MONTANT</th>
-                        <th>DATE</th>
-                        <th>STATUT</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders
-                        .filter((o) =>
-                          (o.reference + o.supplier).toLowerCase().includes(query.toLowerCase()),
-                        )
-                        .map((o) => (
-                          <tr key={o.id}>
-                            <td>
-                              <strong>{o.reference}</strong>
-                            </td>
-                            <td>{o.supplier}</td>
-                            <td>{o.items} références</td>
-                            <td>
-                              <b>{money(o.amount)}</b>
-                            </td>
-                            <td>{shortDate(o.date)}</td>
-                            <td>
-                              <span
-                                className={'pill ' + (o.status === 'Reçue' ? 'green' : 'yellow')}
-                              >
-                                {o.status}
-                              </span>
-                            </td>
-                            <td>
-                              {o.status === 'En transit' &&
-                                (o.lines?.length && o.lines.every((line) => line.item_id) ? (
-                                  <button className="link-btn" onClick={() => void receiveOrder(o)}>
-                                    Réceptionner
-                                  </button>
-                                ) : (
-                                  <span title="La commande historique ne référence pas ses articles de stock">
-                                    Détail manquant
-                                  </span>
-                                ))}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
-          {page === 'team' && role === 'admin' && <TeamManagement />}
-          {page === 'settings' && (
-            <div className="panel" style={{ padding: 22 }}>
-              <div className="panel-title">Préférences du centre</div>
-              <p className="panel-sub" style={{ marginBottom: 22 }}>
-                Configuration de votre espace MediStock
-              </p>
-              <div className="form-grid" style={{ padding: 0, maxWidth: 700 }}>
-                <div className="field">
-                  <label>Nom du centre</label>
-                  <input defaultValue="Clinique du Lagon" />
-                </div>
-                <div className="field">
-                  <label>Ville</label>
-                  <input defaultValue="Abidjan, Côte d’Ivoire" />
-                </div>
-                <div className="field">
-                  <label>Devise</label>
-                  <select defaultValue="XOF">
-                    <option>XOF — Franc CFA</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Alertes d’expiration</label>
-                  <select defaultValue="90">
-                    <option value="30">30 jours</option>
-                    <option value="60">60 jours</option>
-                    <option value="90">90 jours</option>
-                  </select>
-                </div>
-              </div>
-              <button
-                className="btn"
-                style={{ marginTop: 22 }}
-                onClick={() => notify('Préférences enregistrées')}
-              >
-                Enregistrer les modifications
-              </button>
-              <div
-                style={{
-                  borderTop: '1px solid #edf1ef',
-                  marginTop: 25,
-                  paddingTop: 18,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <b style={{ fontSize: 12 }}>Connexion Supabase</b>
-                  <div className="panel-sub">
-                    {supabase
-                      ? 'Base de données connectée'
-                      : 'Mode démonstration · vos données restent dans ce navigateur'}
-                  </div>
-                </div>
-                <span className={'pill ' + (supabase ? 'green' : 'yellow')}>
-                  {supabase ? 'Connecté' : 'Démo'}
-                </span>
-              </div>
-            </div>
-          )}
-          <footer
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '22px 2px 0',
-              color: '#a0acad',
-              fontSize: 9,
-            }}
-          >
-            <span>© 2026 MediStock · Clinique du Lagon</span>
-            <span style={{ display: 'flex', gap: 14 }}>
-              <span>
-                <CircleHelp size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                Centre d’aide
-              </span>
-              <span>Version 1.0.0</span>
-            </span>
-          </footer>
-        </main>
-      </div>
-      {modal === 'item' && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
-        >
-          <form className="modal" onSubmit={saveItem}>
-            <div className="modal-head">
-              <div>
-                <h2>{editItem ? 'Modifier l’article' : 'Ajouter un article'}</h2>
-                <p>Renseignez les informations de suivi de ce produit.</p>
-              </div>
-              <button type="button" className="close" disabled={busy} onClick={() => setModal('')}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="form-grid">
-              <div className="field full">
-                <label>Nom de l’article *</label>
-                <input
-                  name="name"
-                  required
-                  defaultValue={editItem?.name}
-                  placeholder="Ex. Amoxicilline 500 mg"
-                />
-              </div>
-              <div className="field">
-                <label>Catégorie *</label>
-                <select name="category" defaultValue={editItem?.category || 'medication'}>
-                  <option value="medication">Médicaments</option>
-                  <option value="ppe">EPI</option>
-                  <option value="surgical">Outils chirurgicaux</option>
-                  <option value="other">Autres</option>
-                </select>
-              </div>
-              <div className="field">
-                <label>Numéro de lot / série *</label>
-                <input
-                  name="sku_batch"
-                  required
-                  defaultValue={editItem?.sku_batch}
-                  placeholder="LOT-2408-B12"
-                />
-              </div>
-              <div className="field">
-                <label>Quantité en stock *</label>
-                <input
-                  name="quantity"
-                  type="number"
-                  min="0"
-                  required
-                  defaultValue={editItem?.quantity ?? 0}
-                />
-              </div>
-              <div className="field">
-                <label>Seuil de réapprovisionnement</label>
-                <input
-                  name="min_threshold"
-                  type="number"
-                  min="0"
-                  defaultValue={editItem?.min_threshold ?? 10}
-                />
-              </div>
-              <div className="field">
-                <label>Prix unitaire (FCFA)</label>
-                <input name="price" type="number" min="0" defaultValue={editItem?.price ?? 0} />
-              </div>
-              <div className="field">
-                <label>Date d’expiration</label>
-                <input
-                  name="expiration_date"
-                  type="date"
-                  defaultValue={editItem?.expiration_date || ''}
-                />
-              </div>
-              <div className="field full">
-                <label>Fournisseur</label>
-                <select name="supplier_id" defaultValue={editItem?.supplier_id || ''}>
-                  <option value="">Sans fournisseur</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {modal === 'order' && (
             <div
-              style={{ padding: '0 23px 15px', display: 'flex', justifyContent: 'space-between' }}
+              className="modal-backdrop"
+              onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
             >
-              {editItem && (
-                <button
-                  type="button"
-                  className="link-btn"
-                  style={{ color: '#d47062' }}
-                  disabled={busy}
-                  onClick={() => removeItem(editItem.id)}
-                >
-                  Archiver l’article
-                </button>
-              )}
-              <span style={{ marginLeft: 'auto' }} />
+              <PurchaseOrderForm
+                initialReference={`CMD-${new Date().getFullYear()}-${String(orders.length + 87).padStart(3, '0')}`}
+                suppliers={suppliers}
+                items={items}
+                onSubmit={saveOrder}
+                onCancel={() => setModal('')}
+                busy={busy}
+              />
             </div>
-            <div className="modal-actions">
-              <button
-                className="btn secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => setModal('')}
-              >
-                Annuler
-              </button>
-              <button className="btn" type="submit" disabled={busy}>
-                {editItem ? 'Enregistrer' : 'Ajouter à l’inventaire'}
-              </button>
+          )}
+          {modal === 'login' && (
+            <LoginModal
+              isLive={!!supabase}
+              email={email}
+              authError={authError}
+              busy={busy}
+              onSubmit={doLogin}
+              onClose={() => setModal('')}
+            />
+          )}
+          {toast && (
+            <div className="toast">
+              <Check size={16} />
+              {toast}
             </div>
-          </form>
-        </div>
+          )}
+          {booting && (
+            <div className="dashboard-loading-overlay">
+              <div className="dashboard-loading-inner">
+                <DashboardSkeleton />
+              </div>
+            </div>
+          )}
+        </>
+      }
+    >
+      {page === 'dashboard' &&
+        (role === 'nurse' ? (
+          <NurseDashboard {...dashboardProps} />
+        ) : role === 'pharmacist' ? (
+          <PharmacistDashboard {...dashboardProps} />
+        ) : (
+          <AdminDashboard {...dashboardProps} />
+        ))}
+      {page === 'finances' && role === 'admin' && <AdminDashboard {...dashboardProps} />}
+      {page === 'inventory' && (
+        <InventoryPage
+          query={query}
+          onQueryChange={setQuery}
+          filter={filter}
+          onFilterChange={setFilter}
+          role={role}
+          filtered={filtered}
+          suppliers={suppliers}
+          onNewItem={() => {
+            setEditItem(null);
+            setModal('item');
+          }}
+          onEditItem={(i) => {
+            setEditItem(i);
+            setModal('item');
+          }}
+          onExport={exportReport}
+        />
       )}
-      {modal === 'movement' && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
-        >
-          <form className="modal" onSubmit={stockMove}>
-            <div className="modal-head">
-              <div>
-                <h2>Nouveau mouvement</h2>
-                <p>Le niveau d’inventaire sera actualisé automatiquement.</p>
-              </div>
-              <button type="button" className="close" disabled={busy} onClick={() => setModal('')}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="form-grid">
-              <div className="field full">
-                <label>Article *</label>
-                <select name="item_id" required defaultValue={moveItemId || items[0]?.id || ''}>
-                  {items.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name} — disponible : {i.quantity}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label>Type de mouvement *</label>
-                <select name="type" defaultValue={role === 'nurse' ? 'out' : moveType}>
-                  {role === 'nurse' ? (
-                    <option value="out">Sortie de stock</option>
-                  ) : (
-                    <>
-                      <option value="in">Entrée de stock</option>
-                      <option value="out">Sortie de stock</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div className="field">
-                <label>Quantité *</label>
-                <input name="quantity" type="number" min="1" required defaultValue="1" />
-              </div>
-              <div className="field full">
-                <label>Motif *</label>
-                <select
-                  name="reason"
-                  defaultValue={
-                    role === 'nurse'
-                      ? moveReason === 'department_transfer'
-                        ? 'department_transfer'
-                        : 'patient_dispense'
-                      : moveReason
-                  }
-                >
-                  {role === 'nurse' ? (
-                    <>
-                      <option value="patient_dispense">Dispensation patient</option>
-                      <option value="department_transfer">Transfert vers un service</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="delivery">Livraison / don</option>
-                      <option value="patient_dispense">Dispensation patient</option>
-                      <option value="department_transfer">Demande / transfert de service</option>
-                      <option value="expired_disposal">Destruction (péremption)</option>
-                    </>
-                  )}
-                </select>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => setModal('')}
-              >
-                Annuler
-              </button>
-              <button className="btn" type="submit" disabled={busy}>
-                <ArrowLeftRight size={14} /> Enregistrer le mouvement
-              </button>
-            </div>
-          </form>
-        </div>
+      {page === 'movements' && (
+        <MovementsPage
+          movements={movements}
+          items={items}
+          name={name}
+          onNewMovement={() => setModal('movement')}
+        />
       )}
-      {modal === 'supplier' && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
-        >
-          <form className="modal" onSubmit={saveSupplier}>
-            <div className="modal-head">
-              <div>
-                <h2>Nouveau fournisseur</h2>
-                <p>Ajoutez un partenaire à votre répertoire.</p>
-              </div>
-              <button type="button" className="close" disabled={busy} onClick={() => setModal('')}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="form-grid">
-              <div className="field full">
-                <label>Nom de l’entreprise *</label>
-                <input name="name" required placeholder="Ex. Pharmacie Centrale" />
-              </div>
-              <div className="field">
-                <label>Nom du contact</label>
-                <input name="contact_name" placeholder="Nom et prénom" />
-              </div>
-              <div className="field">
-                <label>Téléphone</label>
-                <input name="phone" placeholder="+225 07…" />
-              </div>
-              <div className="field full">
-                <label>Adresse e-mail</label>
-                <input name="email" type="email" placeholder="contact@fournisseur.ci" />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => setModal('')}
-              >
-                Annuler
-              </button>
-              <button className="btn" type="submit" disabled={busy}>
-                Ajouter le fournisseur
-              </button>
-            </div>
-          </form>
-        </div>
+      {page === 'suppliers' && (
+        <SuppliersPage
+          query={query}
+          onQueryChange={setQuery}
+          suppliers={suppliers}
+          items={items}
+          onNewSupplier={() => setModal('supplier')}
+          onNotify={notify}
+        />
       )}
-      {modal === 'order' && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
-        >
-          <PurchaseOrderForm
-            initialReference={`CMD-${new Date().getFullYear()}-${String(orders.length + 87).padStart(3, '0')}`}
-            suppliers={suppliers}
-            items={items}
-            onSubmit={saveOrder}
-            onCancel={() => setModal('')}
-            busy={busy}
-          />
-        </div>
+      {page === 'orders' && (
+        <OrdersPage
+          query={query}
+          onQueryChange={setQuery}
+          orders={orders}
+          suppliers={suppliers}
+          items={items}
+          onNewOrder={() => setModal('order')}
+          onReceive={receiveOrder}
+        />
       )}
-      {modal === 'login' && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={(e) => e.target === e.currentTarget && !busy && setModal('')}
-        >
-          <form className="modal" onSubmit={doLogin}>
-            <div className="modal-head">
-              <div>
-                <h2>Connexion sécurisée</h2>
-                <p>
-                  {supabase
-                    ? 'Connectez-vous avec votre compte clinique.'
-                    : 'Mode démonstration — choisissez un rôle pour explorer.'}
-                </p>
-              </div>
-              <button type="button" className="close" disabled={busy} onClick={() => setModal('')}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className="form-grid">
-              <div className="field full">
-                <label>Adresse e-mail</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  defaultValue={email || 'a.kone@cliniquedulagon.ci'}
-                  placeholder="vous@clinique.ci"
-                />
-              </div>
-              {supabase ? (
-                <div className="field full">
-                  <label>Mot de passe</label>
-                  <input name="password" type="password" required placeholder="••••••••" />
-                </div>
-              ) : (
-                <div className="field full">
-                  <label>Rôle de démonstration</label>
-                  <select name="role" defaultValue="pharmacist">
-                    <option value="admin">Administrateur</option>
-                    <option value="pharmacist">Pharmacien</option>
-                    <option value="nurse">Infirmier</option>
-                  </select>
-                </div>
-              )}
-              {authError && (
-                <div className="field full" style={{ color: '#d47062' }}>
-                  {authError}
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => setModal('')}
-              >
-                Annuler
-              </button>
-              <button className="btn" type="submit" disabled={busy}>
-                {busy ? 'Connexion…' : 'Se connecter'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-      {toast && (
-        <div className="toast">
-          <Check size={16} />
-          {toast}
-        </div>
-      )}
-      {booting && (
-        <div className="dashboard-loading-overlay">
-          <div className="dashboard-loading-inner">
-            <DashboardSkeleton />
-          </div>
-        </div>
-      )}
-    </div>
+      {page === 'team' && role === 'admin' && <TeamManagement />}
+      {page === 'settings' && <SettingsPage isLive={!!supabase} onNotify={notify} />}
+    </DashboardShell>
   );
 }
