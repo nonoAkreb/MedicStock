@@ -11,8 +11,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { pageTitle } from '@/lib/dashboard/constants';
+import type { Center } from '@/lib/dashboard/types';
 
 export function DashboardShell({
+  center,
   nav,
   page,
   onNavigate,
@@ -29,6 +31,7 @@ export function DashboardShell({
   children,
   overlays,
 }: {
+  center: Center | null;
   nav: { title: string; links: [string, string, LucideIcon][] }[];
   page: string;
   onNavigate: (p: string) => void;
@@ -54,7 +57,7 @@ export function DashboardShell({
             <Plus size={22} strokeWidth={3} />
           </div>
           <div>
-            MediStock<small>CLINIQUE DU LAGON</small>
+            MediStock<small>{(center?.name || 'Centre de santé').toUpperCase()}</small>
           </div>
         </div>
         {nav.map((group) => (
@@ -81,8 +84,8 @@ export function DashboardShell({
               <Hospital size={17} />
             </div>
             <div>
-              <b>Clinique du Lagon</b>
-              <span>Abidjan, Côte d’Ivoire</span>
+              <b>{center?.name || 'Centre de santé'}</b>
+              <span>{center?.city || center?.department_name || '—'}</span>
             </div>
             <ChevronDown size={14} color="#9cb0b3" style={{ marginLeft: 'auto' }} />
           </div>
@@ -194,7 +197,7 @@ export function DashboardShell({
               fontSize: 9,
             }}
           >
-            <span>© 2026 MediStock · Clinique du Lagon</span>
+            <span>© 2026 MediStock · {center?.name || 'Centre de santé'}</span>
             <span style={{ display: 'flex', gap: 14 }}>
               <span>
                 <CircleHelp size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />

@@ -7,7 +7,7 @@
 
 begin;
 
-select plan(33);
+select plan(36);
 
 -- ═══════════════ FIXTURES (rôle postgres) ═══════════════════
 insert into public.health_regions(id,name) values
@@ -204,6 +204,26 @@ select lives_ok(
   $$select public.review_center_profile('dd000000-0000-4000-8000-000000000006','approved','nurse')$$,
   'admin approuve le pending rattaché à son centre'
 );
+
+-- update_my_center : nominal admin + refus non-admin
+select lives_ok(
+  $$select public.update_my_center('Centre pgTAP A renommé','Abidjan','XOF',60)$$,
+  'admin renomme son propre centre'
+);
+select is(
+  (select name from public.health_centers where id='cc000000-0000-4000-8000-000000000001'),
+  'Centre pgTAP A renommé',
+  'le nom du centre est persisté'
+);
+set local request.jwt.claims = '{"sub":"dd000000-0000-4000-8000-000000000003","role":"authenticated"}';
+set local "request.jwt.claim.sub" = 'dd000000-0000-4000-8000-000000000003';
+select throws_ok(
+  $$select public.update_my_center('Pirate','X','XOF',90)$$,
+  'Action réservée à l’administrateur du centre',
+  'update_my_center refusé à un non-admin'
+);
+set local request.jwt.claims = '{"sub":"dd000000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local "request.jwt.claim.sub" = 'dd000000-0000-4000-8000-000000000001';
 
 select * from finish();
 rollback;

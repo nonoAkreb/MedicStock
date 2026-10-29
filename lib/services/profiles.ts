@@ -6,12 +6,19 @@ export type Profile = {
   role: string | null;
   access_status: string | null;
   center_id: string | null;
+  center?: {
+    name: string;
+    city: string | null;
+    currency: string;
+    alert_days_before: number;
+    health_departments?: { name: string } | null;
+  } | null;
 };
 
 export async function getOwnProfile(client: SupabaseClient, userId: string) {
   const { data, error } = await client
     .from('profiles')
-    .select('*')
+    .select('*, center:health_centers(name, city, currency, alert_days_before, health_departments(name))')
     .eq('id', userId)
     .maybeSingle();
   return { profile: data as Profile | null, error };

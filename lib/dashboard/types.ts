@@ -39,3 +39,11 @@ export type Order = {
   date: string;
   lines?: OrderLine[];
 };
+export type Center = {
+  id: string;
+  name: string;
+  city: string | null;
+  currency: string;
+  alert_days_before: number;
+  department_name?: string | null;
+};
