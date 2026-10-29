@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatError } from '@/lib/errors';
+import { ROLES } from '@/lib/dashboard/roles';
 import dynamic from 'next/dynamic';
 const NurseDashboard = dynamic(() =>
   import('@/components/dashboard/role-dashboards/nurse').then((m) => m.NurseDashboard),
@@ -96,7 +97,7 @@ export default function Home() {
   );
   const nav: { title: string; links: [string, string, LucideIcon][] }[] = useMemo(
     () =>
-      role === 'nurse'
+      role === ROLES.nurse
       ? [
           {
             title: 'ESPACE DE SOINS',
@@ -107,7 +108,7 @@ export default function Home() {
             ],
           },
         ]
-      : role === 'pharmacist'
+      : role === ROLES.pharmacist
         ? [
             {
               title: 'GESTION DES STOCKS',
@@ -685,14 +686,14 @@ export default function Home() {
       }
     >
       {page === 'dashboard' &&
-        (role === 'nurse' ? (
+        (role === ROLES.nurse ? (
           <NurseDashboard {...dashboardProps} />
-        ) : role === 'pharmacist' ? (
+        ) : role === ROLES.pharmacist ? (
           <PharmacistDashboard {...dashboardProps} />
         ) : (
           <AdminDashboard {...dashboardProps} />
         ))}
-      {page === 'finances' && role === 'admin' && <AdminDashboard {...dashboardProps} />}
+      {page === 'finances' && role === ROLES.admin && <AdminDashboard {...dashboardProps} />}
       {page === 'inventory' && (
         <InventoryPage
           items={items}
@@ -739,7 +740,7 @@ export default function Home() {
           onReceive={receiveOrder}
         />
       )}
-      {page === 'team' && role === 'admin' && <TeamManagement />}
+      {page === 'team' && role === ROLES.admin && <TeamManagement />}
       {page === 'settings' && (
         <SettingsPage
           key={center?.id || 'center'}

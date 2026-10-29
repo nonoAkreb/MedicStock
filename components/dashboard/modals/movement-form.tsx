@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { ROLES } from '@/lib/dashboard/roles';
 import { ArrowLeftRight, X } from 'lucide-react';
 import type { Item } from '@/lib/dashboard/types';
 
@@ -49,8 +50,8 @@ export function MovementFormModal({
               </div>
               <div className="field">
                 <label>Type de mouvement *</label>
-                <select name="type" defaultValue={role === 'nurse' ? 'out' : moveType}>
-                  {role === 'nurse' ? (
+                <select name="type" defaultValue={role === ROLES.nurse ? 'out' : moveType}>
+                  {role === ROLES.nurse ? (
                     <option value="out">Sortie de stock</option>
                   ) : (
                     <>
@@ -69,14 +70,14 @@ export function MovementFormModal({
                 <select
                   name="reason"
                   defaultValue={
-                    role === 'nurse'
+                    role === ROLES.nurse
                       ? moveReason === 'department_transfer'
                         ? 'department_transfer'
                         : 'patient_dispense'
                       : moveReason
                   }
                 >
-                  {role === 'nurse' ? (
+                  {role === ROLES.nurse ? (
                     <>
                       <option value="patient_dispense">Dispensation patient</option>
                       <option value="department_transfer">Transfert vers un service</option>

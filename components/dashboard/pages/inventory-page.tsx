@@ -16,6 +16,7 @@ import { formatError } from '@/lib/errors';
 import { categoryLabel } from '@/lib/dashboard/constants';
 import { money, shortDate } from '@/lib/dashboard/format';
 import type { Item, Supplier } from '@/lib/dashboard/types';
+import { ROLES } from '@/lib/dashboard/roles';
 import { ITEMS_PAGE_SIZE, listItemsPage } from '@/lib/services/inventory';
 
 const catIcon = (c: string) =>
@@ -58,7 +59,7 @@ function InventoryTable({
           </div>
           <div className="panel-sub">Consultez et gérez les fournitures de votre centre</div>
         </div>
-        {role !== 'nurse' && (
+        {role !== ROLES.nurse && (
           <button className="btn" onClick={onNewItem}>
             <Plus size={14} /> Nouvel article
           </button>
@@ -87,7 +88,7 @@ function InventoryTable({
                       <div className={'item-thumb ' + i.category}>{catIcon(i.category)}</div>
                       <div>
                         <strong>{i.name}</strong>
-                        {role !== 'nurse' && (
+                        {role !== ROLES.nurse && (
                           <div style={{ fontSize: 9, color: '#9aa6a7', marginTop: 3 }}>
                             {money(i.price)} / unité
                           </div>
@@ -126,7 +127,7 @@ function InventoryTable({
                     {i.supplier_name || suppliers.find((s) => s.id === i.supplier_id)?.name || '—'}
                   </td>
                   <td>
-                    {role !== 'nurse' && (
+                    {role !== ROLES.nurse && (
                       <button
                         className="icon-btn"
                         style={{ width: 28, height: 28 }}
@@ -241,7 +242,7 @@ export function InventoryPage({
           <option value="surgical">Chirurgie</option>
           <option value="other">Autres</option>
         </select>
-        {role === 'admin' && (
+        {role === ROLES.admin && (
           <button className="btn secondary" onClick={onExport}>
             <Download size={14} /> Exporter
           </button>

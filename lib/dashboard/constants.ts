@@ -1,22 +1,13 @@
-export const categoryLabel: Record<string, string> = {
-  medication: 'Médicaments',
-  ppe: 'EPI',
-  surgical: 'Chirurgie',
-  other: 'Autres',
-};
+import { t } from '@/lib/i18n';
+export const categoryLabel: Record<string, string> = { ...t.category };
 export const pageTitle: Record<string, string> = {
-    dashboard: 'Vue d’ensemble',
-    finances: 'Finances',
-    inventory: 'Inventaire',
-    movements: 'Mouvements de stock',
-    suppliers: 'Fournisseurs',
-    orders: 'Commandes',
-    team: 'Équipe',
-    settings: 'Paramètres',
+  dashboard: t.nav.dashboard,
+  inventory: t.nav.inventory,
+  movements: t.nav.movements,
+  suppliers: t.nav.suppliers,
+  orders: t.nav.orders,
+  finances: t.nav.finances,
+  team: t.nav.team,
+  settings: t.nav.settings,
 };
-export const reasonLabel: Record<string, string> = {
-  delivery: 'Livraison',
-  patient_dispense: 'Dispensation patient',
-  expired_disposal: 'Destruction — péremption',
-  department_transfer: 'Transfert de service',
-};
+export const reasonLabel: Record<string, string> = { ...t.reason };
