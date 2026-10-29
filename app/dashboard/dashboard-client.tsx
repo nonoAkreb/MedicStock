@@ -89,17 +89,9 @@ export default function Home() {
     () => items.filter((i) => i.quantity <= i.min_threshold),
     [items],
   );
-  const filtered = useMemo(
+  const nav: { title: string; links: [string, string, LucideIcon][] }[] = useMemo(
     () =>
-      items.filter(
-        (i) =>
-          (i.name + ' ' + i.sku_batch).toLowerCase().includes(query.toLowerCase()) &&
-          (filter === 'all' || i.category === filter),
-      ),
-    [items, query, filter],
-  );
-  const nav: { title: string; links: [string, string, LucideIcon][] }[] =
-    role === 'nurse'
+      role === 'nurse'
       ? [
           {
             title: 'ESPACE DE SOINS',
@@ -142,7 +134,9 @@ export default function Home() {
                 ['settings', 'Paramètres', Settings],
               ],
             },
-          ];
+          ],
+    [role],
+  );
   const doLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
@@ -696,12 +690,8 @@ export default function Home() {
       {page === 'finances' && role === 'admin' && <AdminDashboard {...dashboardProps} />}
       {page === 'inventory' && (
         <InventoryPage
-          query={query}
-          onQueryChange={setQuery}
-          filter={filter}
-          onFilterChange={setFilter}
+          items={items}
           role={role}
-          filtered={filtered}
           suppliers={suppliers}
           onNewItem={() => {
             setEditItem(null);
@@ -712,6 +702,7 @@ export default function Home() {
             setModal('item');
           }}
           onExport={exportReport}
+          onNotify={notify}
         />
       )}
       {page === 'movements' && (

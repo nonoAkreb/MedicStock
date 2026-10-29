@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ArrowRight, Plus, Search } from 'lucide-react';
 import type { Item, Supplier } from '@/lib/dashboard/types';
 
@@ -16,6 +17,11 @@ export function SuppliersPage({
   onNewSupplier: () => void;
   onNotify: (s: string) => void;
 }) {
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    items.forEach((i) => m.set(i.supplier_id || '', (m.get(i.supplier_id || '') || 0) + 1));
+    return m;
+  }, [items]);
   return (
             <>
               <div className="page-toolbar">
@@ -77,7 +83,7 @@ export function SuppliersPage({
                             <td>{s.phone}</td>
                             <td>
                               <span className="pill green">
-                                {items.filter((i) => i.supplier_id === s.id).length} articles
+                                {counts.get(s.id) || 0} articles
                               </span>
                             </td>
                             <td>

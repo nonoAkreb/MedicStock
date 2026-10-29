@@ -20,6 +20,7 @@ export type Movement = {
   quantity: number;
   reason: string;
   created_at: string;
+  unit_price?: number | null;
   item_name?: string;
   user_name?: string;
 };

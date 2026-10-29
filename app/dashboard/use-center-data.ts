@@ -6,8 +6,8 @@ import type { Center, Item, Movement, Order, Supplier } from '@/lib/dashboard/ty
 import { DEMO_CENTER, initialMovements, loadDemo, makeItems, orderSeed, saveDemo, suppliersSeed } from '@/lib/dashboard/demo';
 import { listItems } from '@/lib/services/inventory';
 import { listSuppliers } from '@/lib/services/suppliers';
-import { listMovements, listExpenseRows } from '@/lib/services/movements';
-import { listOrders, listOrderLines } from '@/lib/services/orders';
+import { listMovements } from '@/lib/services/movements';
+import { listOrders } from '@/lib/services/orders';
 import { getOwnProfile, listProfileRoles } from '@/lib/services/profiles';
 
 export function useCenterData() {
@@ -75,6 +75,12 @@ export function useCenterData() {
             });
           setName(p.full_name || session.user.email || 'Utilisateur');
           setRole(p.role || 'nurse');
+          const [it, sp, mv, od] = await Promise.all([
+            listItems(supabase),
+            listSuppliers(supabase),
+            listMovements(supabase),
+            listOrders(supabase),
+          ]);
           const nextProfileCounts = { admin: 0, pharmacist: 0, nurse: 0 };
           let nextExpenses = expenses;
           if (p.role === 'admin') {
@@ -82,10 +88,7 @@ export function useCenterData() {
             firstMonth.setDate(1);
             firstMonth.setMonth(firstMonth.getMonth() - 5);
             firstMonth.setHours(0, 0, 0, 0);
-            const [rolesResult, outRows] = await Promise.all([
-              listProfileRoles(supabase),
-              listExpenseRows(supabase, firstMonth.toISOString()),
-            ]);
+            const rolesResult = await listProfileRoles(supabase);
             if (rolesResult.error)
               throw new Error(`Chargement des profils impossible : ${rolesResult.error.message}`);
             rolesResult.roles.forEach((u) => {
@@ -102,19 +105,14 @@ export function useCenterData() {
                 value: 0,
               };
             });
-            outRows.forEach((r) => {
+            mv.forEach((r) => {
+              if (r.type !== 'out' || r.created_at < firstMonth.toISOString()) return;
               const d = new Date(r.created_at);
               const entry = series.find((s) => s.key === `${d.getFullYear()}-${d.getMonth()}`);
               if (entry) entry.value += Number(r.quantity) * Number(r.unit_price || 0);
             });
             nextExpenses = series.map(({ label, value }) => ({ label, value }));
           }
-          const [it, sp, mv, od] = await Promise.all([
-            listItems(supabase),
-            listSuppliers(supabase),
-            listMovements(supabase),
-            listOrders(supabase),
-          ]);
           if (!active) return;
           setProfileCounts(nextProfileCounts);
           setExpenses(nextExpenses);
@@ -158,29 +156,6 @@ export function useCenterData() {
       );
     }
   }, [items, suppliers, movements, orders, booting, dataError]);
-  useEffect(() => {
-    const client = supabase;
-    if (!client || booting || dataError) return;
-    let active = true;
-    const loadLines = async () => {
-      const linesByOrder = await listOrderLines(client);
-      if (!active) return;
-      setOrders((current) =>
-        current.map((order) => ({ ...order, lines: linesByOrder.get(order.id) || [] })),
-      );
-    };
-    void loadLines().catch((error) => {
-      if (active)
-        setDataError(
-          error instanceof Error
-            ? formatError(error)
-            : 'Chargement des lignes de commande impossible.',
-        );
-    });
-    return () => {
-      active = false;
-    };
-  }, [booting, dataError]);
   return {
     items,
     setItems,
