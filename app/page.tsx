@@ -10,48 +10,172 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
-  CircleHelp,
   ClipboardCheck,
+  ClipboardList,
   Clock3,
   HeartPulse,
+  Lock,
   Menu,
+  Package,
   PackageCheck,
+  Search,
   ShieldCheck,
   Sparkles,
   Stethoscope,
   Syringe,
+  TriangleAlert,
   Truck,
+  Users,
   X,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
-const features = [
+const problems = [
+  {
+    icon: TriangleAlert,
+    title: 'Ruptures de stock au mauvais moment',
+    text: 'Un produit manquant pendant une consultation ou une urgence, c’est un soin retardé ou dégradé.',
+  },
   {
     icon: CalendarClock,
-    title: 'Lots & dates maîtrisés',
-    text: 'Visualisez les numéros de lots et anticipez les péremptions avant qu’elles ne deviennent du gaspillage.',
+    title: 'Péremptions qui passent inaperçues',
+    text: 'Sans suivi des lots et des dates, des médicaments et des consommables partent à la destruction.',
+  },
+  {
+    icon: ClipboardList,
+    title: 'Inventaires manuels et chronophages',
+    text: 'Cahiers, tableurs et comptages papier mobilisent les équipes et multiplient les erreurs de saisie.',
+  },
+  {
+    icon: Search,
+    title: 'Aucune visibilité en temps réel',
+    text: 'Impossible de savoir qui a sorti quoi, quand, et pour quel motif — ni d’anticiper le réapprovisionnement.',
+  },
+];
+
+const journeys = [
+  {
+    step: 'Créer un article',
+    text: 'Nom, catégorie, numéro de lot, seuil d’alerte, prix et fournisseur : la fiche produit est prête en une minute.',
+  },
+  {
+    step: 'Enregistrer un mouvement',
+    text: 'Livraison, dispensation patient, transfert ou destruction : le stock se met à jour instantanément, avec le motif et l’utilisateur.',
+  },
+  {
+    step: 'Recevoir les alertes',
+    text: 'Stock bas ou date d’expiration proche : les articles à surveiller remontent dans le tableau de bord.',
+  },
+  {
+    step: 'Commander et réceptionner',
+    text: 'Créez une commande fournisseur, réceptionnez-la : les quantités et les prix d’achat sont intégrés au stock.',
+  },
+];
+
+const benefits = [
+  {
+    icon: CalendarClock,
+    title: 'Anticiper plutôt que subir',
+    text: 'Suivi des lots et des dates d’expiration : les produits à risque sont visibles avant d’être perdus.',
     tone: 'mint',
   },
   {
     icon: ArrowDownRight,
-    title: 'Mouvements en un clic',
-    text: 'Enregistrez les livraisons, dons et dispensations. Chaque mouvement met le stock à jour instantanément.',
+    title: 'Tracer chaque mouvement',
+    text: 'Livraisons, dispensations, transferts et destructions sont horodatés, motivés et rattachés à un utilisateur.',
     tone: 'blue',
   },
   {
     icon: Bell,
-    title: 'Alertes vraiment utiles',
-    text: 'Recevez les signaux de réapprovisionnement et d’expiration au bon moment, sans surveiller chaque ligne.',
+    title: 'Rester alerté sans surveiller',
+    text: 'Seuils de réapprovisionnement et échéances remontent en alerte — pas besoin de vérifier chaque ligne.',
     tone: 'amber',
   },
   {
-    icon: ShieldCheck,
-    title: 'Accès selon les rôles',
-    text: 'Admin, pharmacien et infirmier disposent d’un accès adapté, avec une traçabilité par utilisateur.',
+    icon: Truck,
+    title: 'Fluidifier l’approvisionnement',
+    text: 'Répertoire fournisseurs, commandes et réceptions suivies du statut « en transit » à « reçue ».',
     tone: 'violet',
   },
+  {
+    icon: Users,
+    title: 'Adapter l’accès à chaque rôle',
+    text: 'Administrateur, pharmacien et infirmier voient et agissent selon leur fonction dans le centre.',
+    tone: 'mint',
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Piloter par les chiffres',
+    text: 'Valeur du stock, dépenses mensuelles et mouvements par article : un tableau de bord par rôle.',
+    tone: 'blue',
+  },
 ];
+
+const howItWorks = [
+  {
+    n: '1',
+    title: 'Demandez votre accès',
+    text: 'Vous créez votre compte et demandez le rattachement à votre centre de santé.',
+  },
+  {
+    n: '2',
+    title: 'Votre centre vous approuve',
+    text: 'L’administrateur valide votre rôle : vous ne voyez que les données de votre centre.',
+  },
+  {
+    n: '3',
+    title: 'Chargez votre inventaire',
+    text: 'Ajoutez vos articles, lots, seuils et fournisseurs — ou importez au fil de l’usage.',
+  },
+  {
+    n: '4',
+    title: 'Suivez au quotidien',
+    text: 'Mouvements en un clic, alertes automatiques, commandes : le stock reste à jour.',
+  },
+];
+
+const securityPoints = [
+  {
+    icon: Lock,
+    title: 'Isolation des données par centre',
+    text: 'Chaque centre n’accède qu’à ses propres données : l’isolation est appliquée au niveau de la base (règles d’accès par ligne), pas seulement dans l’interface.',
+  },
+  {
+    icon: Users,
+    title: 'Accès par rôle et par approbation',
+    text: 'Un nouveau compte doit être approuvé par l’administrateur du centre avant de voir la moindre donnée. Admin, pharmacien et infirmier ont des droits distincts.',
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Traçabilité des mouvements',
+    text: 'Chaque entrée et sortie conserve son motif, sa date, sa quantité et son auteur : l’historique est consultable et les articles archivés gardent leur trace.',
+  },
+];
+
+const faqItems = [
+  {
+    q: 'Comment se passe l’installation ?',
+    a: 'MediStock est une application web : aucun serveur à installer. Vous créez votre compte, demandez le rattachement à votre centre, et l’administrateur valide votre accès. La prise en main se fait le jour même.',
+  },
+  {
+    q: 'Mes données sont-elles en sécurité ?',
+    a: 'Chaque centre est isolé des autres au niveau de la base de données : un utilisateur ne lit que les données de son centre. Les nouveaux comptes doivent être approuvés par l’administrateur avant tout accès, et chaque rôle dispose de droits limités à sa fonction.',
+  },
+  {
+    q: 'Faut-il former les équipes ?',
+    a: 'L’interface est pensée pour les usages quotidiens : enregistrer un mouvement prend quelques clics. Une courte prise en main suffit pour la plupart des équipes ; nous pouvons accompagner votre centre lors du démarrage.',
+  },
+  {
+    q: 'Combien coûte MediStock ?',
+    a: 'Le tarif dépend de la taille et des besoins de votre centre. Demandez une démonstration ou un accès : nous construisons ensemble une proposition adaptée, en FCFA.',
+  },
+  {
+    q: 'Que se passe-t-il si j’ai un problème ?',
+    a: 'Contactez notre équipe via la page de demande d’accès ou votre contact centre. Nous répondons aux questions de prise en main et aux demandes d’évolution.',
+  },
+];
+
 const stockRows = [
   {
     name: 'Amoxicilline 500 mg',
@@ -78,6 +202,7 @@ const stockRows = [
     icon: <PackageCheck size={15} />,
   },
 ];
+
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
@@ -99,9 +224,15 @@ export default function LandingPage() {
           <nav className="hidden items-center gap-8 md:flex" aria-label="Navigation principale">
             <a
               className="text-[13px] font-medium text-slate-600 transition hover:text-emerald-700"
-              href="#features"
+              href="#fonctionnalites"
             >
               Fonctionnalités
+            </a>
+            <a
+              className="text-[13px] font-medium text-slate-600 transition hover:text-emerald-700"
+              href="#securite"
+            >
+              Sécurité
             </a>
             <a
               className="text-[13px] font-medium text-slate-600 transition hover:text-emerald-700"
@@ -111,20 +242,23 @@ export default function LandingPage() {
             </a>
             <a
               className="text-[13px] font-medium text-slate-600 transition hover:text-emerald-700"
-              href="#temoignages"
+              href="#faq"
             >
-              Témoignages
+              FAQ
             </a>
           </nav>
           <div className="hidden items-center gap-2.5 md:flex">
             <Link
-              href="/register"
-              className={buttonVariants({ variant: 'outline', className: 'px-4 py-2.5 text-xs' })}
+              href="/login"
+              className={buttonVariants({
+                variant: 'outline',
+                className: 'px-4 py-2.5 text-xs',
+              })}
             >
-              Demander un accès
+              Connexion
             </Link>
-            <Link href="/login" className={buttonVariants({ className: 'px-4 py-2.5 text-xs' })}>
-              Connexion <ArrowRight size={14} />
+            <Link href="/register" className={buttonVariants({ className: 'px-4 py-2.5 text-xs' })}>
+              Demander un accès <ArrowRight size={14} />
             </Link>
           </div>
           <div className="flex items-center gap-2 md:hidden">
@@ -136,6 +270,7 @@ export default function LandingPage() {
             </Link>
             <button
               aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
               className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700"
             >
@@ -149,9 +284,16 @@ export default function LandingPage() {
               <a
                 onClick={closeMenu}
                 className="rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-50"
-                href="#features"
+                href="#fonctionnalites"
               >
                 Fonctionnalités
+              </a>
+              <a
+                onClick={closeMenu}
+                className="rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-50"
+                href="#securite"
+              >
+                Sécurité
               </a>
               <a
                 onClick={closeMenu}
@@ -163,9 +305,9 @@ export default function LandingPage() {
               <a
                 onClick={closeMenu}
                 className="rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-50"
-                href="#temoignages"
+                href="#faq"
               >
-                Témoignages
+                FAQ
               </a>
               <Link
                 onClick={closeMenu}
@@ -180,6 +322,7 @@ export default function LandingPage() {
       </header>
 
       <main>
+        {/* 1 — Hero */}
         <section className="relative isolate px-5 pb-14 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:pt-24">
           <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(213,242,235,.58),transparent_65%)]" />
           <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[.94fr_1.06fr] lg:gap-10">
@@ -190,35 +333,33 @@ export default function LandingPage() {
                 </span>{' '}
                 L’inventaire de santé, enfin serein
               </div>
-              <h1 className="font-[Manrope,sans-serif] text-[42px] font-extrabold leading-[1.08] tracking-[-1.8px] text-[#153448] sm:text-[53px] lg:text-[58px]">
-                Zéro rupture de stock.
+              <h1 className="font-[Manrope,sans-serif] text-[40px] font-extrabold leading-[1.08] tracking-[-1.8px] text-[#153448] sm:text-[50px] lg:text-[56px]">
+                Moins de ruptures, moins de gaspillage.
                 <br />
-                <span className="text-emerald-600">Moins de gaspillage.</span>
-                <br />
-                Plus de temps pour vos patients.
+                <span className="text-emerald-600">Plus de temps pour vos patients.</span>
               </h1>
               <p className="mt-6 max-w-[500px] text-[15px] leading-7 text-slate-600 sm:text-base">
-                L’inventaire médical intelligent, fluide et sécurisé pour les centres de santé
-                modernes. Gardez le contrôle de chaque lot, chaque mouvement et chaque échéance.
+                L’inventaire médical intelligent, fluide et sécurisé pour les centres de santé.
+                Gardez le contrôle de chaque lot, chaque mouvement et chaque échéance.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/register"
+                <a
+                  href="#contact"
                   className={buttonVariants({
                     className: 'min-h-[50px] px-6 text-sm shadow-lg shadow-emerald-700/15',
                   })}
                 >
-                  Demander un accès <ArrowRight size={17} />
-                </Link>
-                <a
-                  href="#contact"
+                  Demander une démo <ArrowRight size={17} />
+                </a>
+                <Link
+                  href="/register"
                   className={buttonVariants({
                     variant: 'outline',
                     className: 'min-h-[50px] px-6 text-sm',
                   })}
                 >
-                  Demander une démo <ArrowUpRight size={16} />
-                </a>
+                  Demander un accès <ArrowUpRight size={16} />
+                </Link>
               </div>
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-medium text-slate-500">
                 <span className="flex items-center gap-1.5">
@@ -228,7 +369,7 @@ export default function LandingPage() {
                   <Check size={13} className="text-emerald-600" /> Mise en route rapide
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={13} className="text-emerald-600" /> Données sécurisées
+                  <ShieldCheck size={13} className="text-emerald-600" /> Données isolées par centre
                 </span>
               </div>
             </div>
@@ -244,7 +385,7 @@ export default function LandingPage() {
                     <div>
                       <div className="text-[11px] font-bold text-slate-800">Aperçu des stocks</div>
                       <div className="mt-0.5 text-[9px] text-slate-400">
-                        Clinique du Lagon · Aujourd’hui
+                        Exemple d’interface · données d’illustration
                       </div>
                     </div>
                   </div>
@@ -398,7 +539,72 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-24 bg-[#f7faf9] px-5 py-20 sm:px-8 sm:py-24">
+        {/* 2 — Problèmes */}
+        <section className="border-t border-slate-100 px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex rounded-full bg-rose-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-rose-600">
+                Le quotidien sans visibilité
+              </span>
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Ce que coûte un stock géré à l’aveugle.
+              </h2>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {problems.map((p) => (
+                <Card key={p.title} className="border-slate-200/80">
+                  <CardContent className="p-6">
+                    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+                      <p.icon size={20} />
+                    </div>
+                    <h3 className="mt-5 font-[Manrope,sans-serif] text-[15px] font-bold tracking-tight text-[#183849]">
+                      {p.title}
+                    </h3>
+                    <p className="mt-2.5 text-[12px] leading-6 text-slate-500">{p.text}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 3 — Parcours réels */}
+        <section className="bg-[#f7faf9] px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-emerald-700">
+                Le produit en action
+              </span>
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Vos parcours de tous les jours, tels qu’ils existent dans l’application.
+              </h2>
+            </div>
+            <div className="mt-12 grid gap-4 md:grid-cols-2">
+              {journeys.map((j, i) => (
+                <div
+                  key={j.step}
+                  className="flex gap-4 rounded-2xl border border-slate-200/80 bg-white p-6"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 font-[Manrope,sans-serif] text-sm font-extrabold text-white">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-[Manrope,sans-serif] text-[15px] font-bold text-[#183849]">
+                      {j.step}
+                    </h3>
+                    <p className="mt-1.5 text-[12px] leading-6 text-slate-500">{j.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 4 — Fonctionnalités par bénéfices */}
+        <section
+          id="fonctionnalites"
+          className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-24"
+        >
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-2xl text-center">
               <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-emerald-700">
@@ -413,8 +619,8 @@ export default function LandingPage() {
                 place au soin.
               </p>
             </div>
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map((f, i) => (
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {benefits.map((f) => (
                 <Card
                   key={f.title}
                   className="group border-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-900/5"
@@ -425,10 +631,7 @@ export default function LandingPage() {
                     >
                       <f.icon size={21} />
                     </div>
-                    <div className="mt-6 text-[10px] font-bold tracking-[.12em] text-slate-300">
-                      0{i + 1}
-                    </div>
-                    <h3 className="mt-1.5 font-[Manrope,sans-serif] text-[16px] font-bold tracking-tight text-[#183849]">
+                    <h3 className="mt-5 font-[Manrope,sans-serif] text-[16px] font-bold tracking-tight text-[#183849]">
                       {f.title}
                     </h3>
                     <p className="mt-2.5 text-[12px] leading-6 text-slate-500">{f.text}</p>
@@ -439,83 +642,70 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="temoignages" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-24">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-emerald-700">
-                <ClipboardCheck size={14} /> Un quotidien plus fiable
+        {/* 5 — Comment ça marche */}
+        <section className="border-t border-slate-100 bg-[#f7faf9] px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex rounded-full bg-cyan-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-cyan-800">
+                Comment ça marche
               </span>
-              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold leading-tight tracking-[-1px] text-[#16384a] sm:text-4xl">
-                La visibilité qui aide les équipes à mieux soigner.
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Opérationnel en quatre étapes.
               </h2>
-              <p className="mt-4 max-w-lg text-sm leading-7 text-slate-500">
-                Un inventaire à jour, des alertes claires et des responsabilités bien définies :
-                chaque équipe sait quoi faire, et quand le faire.
-              </p>
-              <Link
-                href="/register"
-                className={`${buttonVariants({ variant: 'outline', className: 'mt-7' })} !no-underline`}
-              >
-                Découvrir MediStock <ArrowRight size={15} />
-              </Link>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Card className="bg-[#f8fbfa]">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
-                    <Check size={17} />
-                  </div>
-                  <div className="mt-5 font-[Manrope,sans-serif] text-2xl font-extrabold text-[#16384a]">
-                    99<span className="text-emerald-600">%</span>
-                  </div>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-600">
-                    de précision visée
-                  </p>
-                  <p className="mt-2 text-[10px] leading-5 text-slate-400">
-                    Avec des mouvements suivis et un inventaire maintenu à jour.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-[#f8fbfa]">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-100 text-cyan-800">
-                    <ArrowDownRight size={17} />
-                  </div>
-                  <div className="mt-5 font-[Manrope,sans-serif] text-2xl font-extrabold text-[#16384a]">
-                    −40<span className="text-cyan-700">%</span>
-                  </div>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-600">
-                    de gaspillage ciblé
-                  </p>
-                  <p className="mt-2 text-[10px] leading-5 text-slate-400">
-                    L’anticipation des expirations contribue à limiter les pertes.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-[#f8fbfa]">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-100 text-amber-700">
-                    <Clock3 size={17} />
-                  </div>
-                  <div className="mt-5 font-[Manrope,sans-serif] text-2xl font-extrabold text-[#16384a]">
-                    5 h
-                  </div>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-600">
-                    à rendre aux équipes
-                  </p>
-                  <p className="mt-2 text-[10px] leading-5 text-slate-400">
-                    Moins de suivi manuel, davantage de temps pour les patients.
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {howItWorks.map((s) => (
+                <div key={s.n} className="relative">
+                  <span className="font-[Manrope,sans-serif] text-5xl font-extrabold tracking-tight text-emerald-100">
+                    {s.n}
+                  </span>
+                  <h3 className="mt-2 font-[Manrope,sans-serif] text-[15px] font-bold text-[#183849]">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2 text-[12px] leading-6 text-slate-500">{s.text}</p>
+                </div>
+              ))}
             </div>
-            <p className="mt-4 text-center text-[9px] leading-5 text-slate-400">
-              Repères indicatifs à valider selon l’organisation et les données de chaque centre ;
-              résultats non garantis.
-            </p>
           </div>
         </section>
 
+        {/* 6 — Sécurité */}
+        <section id="securite" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-emerald-700">
+                <Lock size={14} /> Sécurité et fiabilité
+              </span>
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold leading-tight tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Vos données, isolées et tracées — par conception.
+              </h2>
+              <p className="mt-4 max-w-lg text-sm leading-7 text-slate-500">
+                Les protections ci-dessous sont celles réellement implémentées dans l’application :
+                pas de promesse vague, seulement ce qui est vérifiable.
+              </p>
+            </div>
+            <div className="grid gap-4">
+              {securityPoints.map((s) => (
+                <div
+                  key={s.title}
+                  className="flex gap-4 rounded-2xl border border-slate-200/80 bg-white p-5"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <s.icon size={19} />
+                  </span>
+                  <div>
+                    <h3 className="font-[Manrope,sans-serif] text-[14px] font-bold text-[#183849]">
+                      {s.title}
+                    </h3>
+                    <p className="mt-1 text-[12px] leading-6 text-slate-500">{s.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7 — Tarifs */}
         <section
           id="tarifs"
           className="scroll-mt-24 border-y border-slate-100 bg-[#f7faf9] px-5 py-16 sm:px-8"
@@ -523,27 +713,81 @@ export default function LandingPage() {
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 md:flex-row md:items-center">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-[.15em] text-emerald-700">
-                Tarifs simples
+                Tarification
               </span>
               <h2 className="mt-2 font-[Manrope,sans-serif] text-2xl font-extrabold tracking-tight text-[#16384a] sm:text-3xl">
-                Commencez sans friction.
+                Un devis adapté à votre centre.
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Demandez un accès à votre centre de santé et découvrez une gestion de stock plus
-                sereine. Les besoins des équipes varient : échangeons sur votre centre.
+                Le tarif dépend de la taille de votre structure et de vos besoins. Demandez une
+                démonstration : nous vous adressons une proposition en FCFA, sans engagement.
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link href="/register" className={buttonVariants()}>
-                Demander un accès <ArrowRight size={16} />
-              </Link>
-              <a href="#contact" className={buttonVariants({ variant: 'outline' })}>
-                Parler à notre équipe
+              <a href="#contact" className={buttonVariants()}>
+                Demander une démo <ArrowRight size={16} />
               </a>
+              <Link href="/register" className={buttonVariants({ variant: 'outline' })}>
+                Demander un accès
+              </Link>
             </div>
           </div>
         </section>
 
+        {/* 8 — Pilote */}
+        <section id="pilote" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto grid max-w-7xl gap-10 rounded-[28px] border border-emerald-100 bg-emerald-50/40 px-6 py-12 sm:px-12 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.15em] text-emerald-700">
+                <Stethoscope size={14} /> Programme pilote
+              </span>
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Ouvert aux premiers centres partenaires.
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                MediStock se déploie auprès de centres de santé pilotes en Afrique francophone. En
+                rejoignant le programme, vous bénéficiez d’un accompagnement personnalisé pour la
+                prise en main et influencez directement la feuille de route produit.
+              </p>
+            </div>
+            <Link
+              href="/register"
+              className={`${buttonVariants({ className: 'px-6 py-3 text-sm' })} !no-underline`}
+            >
+              Rejoindre le programme <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+
+        {/* 9 — FAQ */}
+        <section id="faq" className="scroll-mt-24 border-t border-slate-100 px-5 py-20 sm:px-8 sm:py-24">
+          <div className="mx-auto max-w-3xl">
+            <div className="text-center">
+              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-emerald-700">
+                Questions fréquentes
+              </span>
+              <h2 className="mt-4 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-[#16384a] sm:text-4xl">
+                Ce que les équipes nous demandent.
+              </h2>
+            </div>
+            <div className="mt-10 divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white">
+              {faqItems.map((f) => (
+                <details key={f.q} className="group px-6 py-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-[Manrope,sans-serif] text-[14px] font-bold text-[#183849] marker:hidden [&::-webkit-details-marker]:hidden">
+                    {f.q}
+                    <ChevronDown
+                      size={17}
+                      className="shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180"
+                    />
+                  </summary>
+                  <p className="mt-3 text-[13px] leading-6 text-slate-500">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 10 — CTA final */}
         <section id="contact" className="scroll-mt-20 px-5 py-16 sm:px-8 sm:py-20">
           <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-[#123148] px-6 py-12 text-center shadow-2xl shadow-[#123148]/15 sm:px-12 sm:py-16">
             <div className="pointer-events-none absolute -left-28 -top-40 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl" />
@@ -553,18 +797,26 @@ export default function LandingPage() {
                 <HeartPulse size={23} />
               </div>
               <h2 className="mt-5 font-[Manrope,sans-serif] text-3xl font-extrabold tracking-[-1px] text-white sm:text-4xl">
-                Prêt à automatiser la gestion de votre pharmacie&nbsp;?
+                Prêt à reprendre le contrôle de votre stock&nbsp;?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-300">
-                Demandez un accès auprès de votre centre. Une meilleure visibilité des stocks
-                commence par un premier pas.
+                Demandez une démonstration ou un accès pour votre centre. Une meilleure visibilité
+                des stocks commence par un premier pas.
               </p>
-              <Link
-                href="/register"
-                className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/50"
-              >
-                Demander un accès <ArrowRight size={17} />
-              </Link>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/register"
+                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/50"
+                >
+                  Demander un accès <ArrowRight size={17} />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-7 py-3 text-sm font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                >
+                  Se connecter
+                </Link>
+              </div>
               <div className="mt-4 text-[10px] text-slate-400">
                 Accès après approbation par votre centre
               </div>
@@ -581,14 +833,17 @@ export default function LandingPage() {
             MediStock
           </Link>
           <div className="flex flex-wrap items-center justify-center gap-5 text-[10px] font-medium text-slate-500">
-            <a href="#features" className="hover:text-emerald-700">
+            <a href="#fonctionnalites" className="hover:text-emerald-700">
               Fonctionnalités
+            </a>
+            <a href="#securite" className="hover:text-emerald-700">
+              Sécurité
             </a>
             <a href="#tarifs" className="hover:text-emerald-700">
               Tarifs
             </a>
-            <a href="#contact" className="hover:text-emerald-700">
-              Contact
+            <a href="#faq" className="hover:text-emerald-700">
+              FAQ
             </a>
             <Link href="/login" className="hover:text-emerald-700">
               Connexion
