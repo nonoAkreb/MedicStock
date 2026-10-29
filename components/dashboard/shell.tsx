@@ -1,4 +1,4 @@
-import { ROLES, roleLabel, type Role } from '@/lib/dashboard/roles';
+import { ROLES, roleLabel } from '@/lib/dashboard/roles';
 import { useState } from 'react';
 import {
   Bell,
