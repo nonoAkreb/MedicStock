@@ -31,6 +31,9 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
+const contactEmail = 'nonoakreb@gmail.com';
+const contactMailto = `mailto:${contactEmail}?subject=${encodeURIComponent('Demande de démonstration MediStock')}`;
+
 const problems = [
   {
     icon: TriangleAlert,
@@ -115,8 +118,8 @@ const benefits = [
 const howItWorks = [
   {
     n: '1',
-    title: 'Demandez votre accès',
-    text: 'Vous créez votre compte et demandez le rattachement à votre centre de santé.',
+    title: 'Contactez l’équipe',
+    text: 'Une démonstration ou un devis par e-mail, puis l’accès est préparé pour votre centre.',
   },
   {
     n: '2',
@@ -156,7 +159,7 @@ const securityPoints = [
 const faqItems = [
   {
     q: 'Comment se passe l’installation ?',
-    a: 'MediStock est une application web : aucun serveur à installer. Vous créez votre compte, demandez le rattachement à votre centre, et l’administrateur valide votre accès. La prise en main se fait le jour même.',
+    a: 'MediStock est une application web : aucun serveur à installer. Votre compte est créé et rattaché à votre centre par un administrateur, qui valide votre accès. La prise en main se fait le jour même.',
   },
   {
     q: 'Mes données sont-elles en sécurité ?',
@@ -172,7 +175,7 @@ const faqItems = [
   },
   {
     q: 'Que se passe-t-il si j’ai un problème ?',
-    a: 'Contactez notre équipe via la page de demande d’accès ou votre contact centre. Nous répondons aux questions de prise en main et aux demandes d’évolution.',
+    a: 'Écrivez-nous à nonoakreb@gmail.com ou passez par votre contact centre. Nous répondons aux questions de prise en main et aux demandes d’évolution.',
   },
 ];
 
@@ -344,7 +347,7 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href="#contact"
+                  href={contactMailto}
                   className={buttonVariants({
                     className: 'min-h-[50px] px-6 text-sm shadow-lg shadow-emerald-700/15',
                   })}
@@ -724,7 +727,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <a href="#contact" className={buttonVariants()}>
+              <a href={contactMailto} className={buttonVariants()}>
                 Demander une démo <ArrowRight size={16} />
               </a>
               <Link href="/register" className={buttonVariants({ variant: 'outline' })}>
@@ -800,25 +803,30 @@ export default function LandingPage() {
                 Prêt à reprendre le contrôle de votre stock&nbsp;?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-300">
-                Demandez une démonstration ou un accès pour votre centre. Une meilleure visibilité
-                des stocks commence par un premier pas.
+                Demandez une démonstration ou un devis par e-mail&nbsp;: nous vous répondons avec une
+                proposition adaptée à votre centre.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href="/register"
+                <a
+                  href={contactMailto}
                   className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-emerald-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/50"
                 >
-                  Demander un accès <ArrowRight size={17} />
-                </Link>
+                  Demander une démo <ArrowRight size={17} />
+                </a>
                 <Link
-                  href="/login"
+                  href="/register"
                   className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-7 py-3 text-sm font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
                 >
-                  Se connecter
+                  Demander un accès
                 </Link>
               </div>
               <div className="mt-4 text-[10px] text-slate-400">
-                Accès après approbation par votre centre
+                Démo et devis&nbsp;:{' '}
+                <a href={`mailto:${contactEmail}`} className="underline underline-offset-2">
+                  {contactEmail}
+                </a>{' '}
+                · <Link href="/login" className="underline underline-offset-2">Se connecter</Link>
+                {' '}· accès après approbation par votre centre
               </div>
             </div>
           </div>
