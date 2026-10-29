@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { Modal } from './modal';
 
 export type PurchaseOrderDraft = {
   reference: string;
@@ -62,16 +63,14 @@ export function PurchaseOrderForm({
   };
 
   return (
-    <form className="modal" onSubmit={submit}>
-      <div className="modal-head">
-        <div>
-          <h2>Nouvelle commande</h2>
-          <p>Associez chaque ligne à un article réel de l’inventaire.</p>
-        </div>
-        <button type="button" className="close" disabled={busy} onClick={onCancel}>
-          ×
-        </button>
-      </div>
+    <Modal
+      title="Nouvelle commande"
+      subtitle="Associez chaque ligne à un article réel de l’inventaire."
+      busy={busy}
+      onClose={onCancel}
+      wide
+    >
+      <form onSubmit={submit}>
       <div className="form-grid">
         <div className="field">
           <label htmlFor="order-reference">Référence *</label>
@@ -190,14 +189,15 @@ export function PurchaseOrderForm({
       <div className="panel-sub">
         Montant total calculé : {new Intl.NumberFormat('fr-FR').format(amount)} FCFA
       </div>
-      <div className="modal-actions">
-        <button className="btn secondary" type="button" disabled={busy} onClick={onCancel}>
-          Annuler
-        </button>
-        <button className="btn" type="submit" disabled={busy || !suppliers.length || !items.length}>
-          Créer la commande
-        </button>
-      </div>
-    </form>
+        <div className="modal-actions">
+          <button className="btn secondary" type="button" disabled={busy} onClick={onCancel}>
+            Annuler
+          </button>
+          <button className="btn" type="submit" disabled={busy || !suppliers.length || !items.length}>
+            Créer la commande
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
